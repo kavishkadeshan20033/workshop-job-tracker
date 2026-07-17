@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: workshop-job-tracker
+    runtime: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: DB_PATH
+        value: ./database/workshop.db
+      - key: PORT
+        value: 3000

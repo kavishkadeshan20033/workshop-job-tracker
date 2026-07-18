@@ -32,10 +32,17 @@ app.use(helmet({
     contentSecurityPolicy: false, // Allow Swagger UI to load
     crossOriginEmbedderPolicy: false,
 }));
+const allowedOrigins = process.env.NODE_ENV === 'production'
+    ? [process.env.CLIENT_URL].filter(Boolean)
+    : ['http://localhost:5173', 'http://localhost:3000'];
+
 app.use(cors({
-    origin: process.env.NODE_ENV === 'production'
-        ? [process.env.CLIENT_URL || '*']
-        : ['http://localhost:5173', 'http://localhost:3000'],
+    origin: (origin, callback) => {
+        // Allow requests with no origin (e.g., mobile apps, curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
 }));
 app.use(express.json());

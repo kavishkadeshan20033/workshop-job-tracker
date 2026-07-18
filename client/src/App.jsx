@@ -12,6 +12,7 @@ import Technicians from './pages/Technicians';
 import Parts from './pages/Parts';
 import Invoices from './pages/Invoices';
 import Reports from './pages/Reports';
+import Vehicles from './pages/Vehicles';
 
 function ProtectedRoute() {
     const { user, loading } = useAuth();
@@ -65,6 +66,7 @@ export default function App() {
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/jobs" element={<Jobs />} />
                         <Route path="/customers" element={<Customers />} />
+                        <Route path="/vehicles" element={<Vehicles />} />
                         <Route element={<AdminRoute />}>
                             <Route path="/users" element={<Users />} />
                             <Route path="/technicians" element={<Technicians />} />

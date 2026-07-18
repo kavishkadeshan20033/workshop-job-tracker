@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import {
     HiOutlineViewGrid, HiOutlineBriefcase, HiOutlineUsers,
     HiOutlineCube, HiOutlineDocumentText, HiOutlineChartBar,
-    HiOutlineLogout, HiOutlineUserGroup, HiOutlineIdentification
+    HiOutlineLogout, HiOutlineUserGroup, HiOutlineIdentification,
+    HiOutlineTruck
 } from 'react-icons/hi';
 import { FaWrench } from 'react-icons/fa';
 
@@ -14,6 +15,7 @@ export default function Sidebar() {
         { path: '/', icon: <HiOutlineViewGrid />, label: 'Dashboard' },
         { path: '/jobs', icon: <HiOutlineBriefcase />, label: 'Jobs' },
         { path: '/customers', icon: <HiOutlineUsers />, label: 'Customers' },
+        { path: '/vehicles', icon: <HiOutlineTruck />, label: 'Vehicles' },
     ];
 
     const adminItems = [

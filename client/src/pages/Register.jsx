@@ -109,6 +109,13 @@ export default function Register() {
                         <input className="form-input" type="password" placeholder="••••••••"
                             value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
                     </div>
+                    <div className="form-group">
+                        <label className="form-label">Role</label>
+                        <select className="form-input" value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
+                            <option value="employee">Employee</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
                     
                     <button
                         className="btn btn-primary w-full justify-center"

@@ -105,4 +105,13 @@ export const reportAPI = {
     getMonthly: (year, month) => api.get('/reports/monthly', { params: { year, month } }),
 };
 
+// Vehicles
+export const vehicleAPI = {
+    getAll: (customer_id) => api.get('/vehicles', { params: { customer_id } }),
+    getById: (id) => api.get(`/vehicles/${id}`),
+    create: (data) => api.post('/vehicles', data),
+    update: (id, data) => api.put(`/vehicles/${id}`, data),
+    delete: (id) => api.delete(`/vehicles/${id}`),
+};
+
 export default api;

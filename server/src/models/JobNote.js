@@ -1,23 +1,23 @@
 const { queryAll, queryOne, runQuery } = require('../config/db');
 
 const JobNoteModel = {
-    findByJobId(job_id) {
+    async findByJobId(job_id) {
         return queryAll(`
-            SELECT n.*, u.full_name as author_name 
+            SELECT n.*, u.full_name AS author_name
             FROM job_notes n
             LEFT JOIN users u ON n.employee_id = u.id
-            WHERE n.job_id = ?
+            WHERE n.job_id = $1
             ORDER BY n.created_at ASC
         `, [job_id]);
     },
 
-    create({ job_id, employee_id, description }) {
-        const result = runQuery(
-            'INSERT INTO job_notes (job_id, employee_id, description) VALUES (?, ?, ?)',
+    async create({ job_id, employee_id, description }) {
+        const result = await runQuery(
+            'INSERT INTO job_notes (job_id, employee_id, description) VALUES ($1, $2, $3) RETURNING id',
             [job_id, employee_id, description]
         );
-        return queryOne('SELECT * FROM job_notes WHERE id = ?', [result.lastInsertRowid]);
-    }
+        return queryOne('SELECT * FROM job_notes WHERE id = $1', [result.lastInsertRowid]);
+    },
 };
 
 module.exports = JobNoteModel;

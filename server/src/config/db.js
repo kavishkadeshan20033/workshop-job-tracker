@@ -1,80 +1,56 @@
-const path = require('path');
+const { Pool } = require('pg');
 const fs = require('fs');
-const initSqlJs = require('sql.js');
+const path = require('path');
 const bcrypt = require('bcryptjs');
 const logger = require('../middleware/logger');
 
-const DB_PATH = path.resolve(__dirname, '../../', process.env.DB_PATH || './database/workshop.db');
-const SCHEMA_PATH = path.resolve(__dirname, '../../database/schema.sql');
-
-// Ensure database directory exists
-const dbDir = path.dirname(DB_PATH);
-if (!fs.existsSync(dbDir)) {
-    fs.mkdirSync(dbDir, { recursive: true });
-}
-
-let db = null;
+// Create connection pool using DATABASE_URL (Render provides this automatically)
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+});
 
 /**
- * Save database to disk
- */
-function saveDatabase() {
-    if (db) {
-        const data = db.export();
-        const buffer = Buffer.from(data);
-        fs.writeFileSync(DB_PATH, buffer);
-    }
-}
-
-// Auto-save periodically (every 5 seconds)
-setInterval(saveDatabase, 5000);
-
-/**
- * Initialize database - must be called before using db
+ * Initialize database — run schema and seed if tables don't exist
  */
 async function initializeDatabase() {
     try {
-        const SQL = await initSqlJs();
+        const client = await pool.connect();
+        logger.info('PostgreSQL connected successfully.');
 
-        // Load existing database or create new one
-        if (fs.existsSync(DB_PATH)) {
-            const fileBuffer = fs.readFileSync(DB_PATH);
-            db = new SQL.Database(fileBuffer);
-            logger.info('Database loaded from disk.');
-        } else {
-            db = new SQL.Database();
-            logger.info('Created new database.');
-        }
+        // Check if users table exists
+        const result = await client.query(
+            `SELECT to_regclass('public.users') AS table_name`
+        );
 
-        // Enable foreign keys
-        db.run('PRAGMA foreign_keys = ON');
-
-        // Check if tables exist
-        const result = db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='users'");
-
-        if (result.length === 0) {
+        if (!result.rows[0].table_name) {
             logger.info('Initializing database schema...');
-            const schema = fs.readFileSync(SCHEMA_PATH, 'utf8');
-            db.run(schema);
+            const schemaPath = path.resolve(__dirname, '../../database/schema.sql');
+            const schema = fs.readFileSync(schemaPath, 'utf8');
+            await client.query(schema);
 
             // Seed default admin user
             const adminHash = bcrypt.hashSync('admin123', 10);
-            db.run(
-                'INSERT INTO users (username, email, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)',
+            await client.query(
+                'INSERT INTO users (username, email, password_hash, full_name, role) VALUES ($1, $2, $3, $4, $5)',
                 ['admin', 'admin@workshop.com', adminHash, 'System Admin', 'admin']
             );
 
             // Seed default employee user
             const techHash = bcrypt.hashSync('tech123', 10);
-            db.run(
-                'INSERT INTO users (username, email, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)',
+            await client.query(
+                'INSERT INTO users (username, email, password_hash, full_name, role) VALUES ($1, $2, $3, $4, $5)',
                 ['tech1', 'tech1@workshop.com', techHash, 'John Technician', 'employee']
             );
 
-            // Seed a technician record for the employee (tech1 is id=2)
-            db.run(
-                'INSERT INTO technicians (user_id, name, specialization, phone) VALUES (?, ?, ?, ?)',
-                [2, 'John Technician', 'Hardware Diagnostics', '555-0101']
+            // Get tech1's id
+            const techUser = await client.query('SELECT id FROM users WHERE username = $1', ['tech1']);
+            const techUserId = techUser.rows[0].id;
+
+            // Seed a technician record for the employee
+            await client.query(
+                'INSERT INTO technicians (user_id, name, specialization, phone) VALUES ($1, $2, $3, $4)',
+                [techUserId, 'John Technician', 'Hardware Diagnostics', '555-0101']
             );
 
             // Seed sample parts
@@ -92,20 +68,20 @@ async function initializeDatabase() {
             ];
 
             for (const p of parts) {
-                db.run(
-                    'INSERT INTO parts (name, part_number, stock_qty, unit_price, reorder_level, supplier, category) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                await client.query(
+                    'INSERT INTO parts (name, part_number, stock_qty, unit_price, reorder_level, supplier, category) VALUES ($1, $2, $3, $4, $5, $6, $7)',
                     p
                 );
             }
 
-            saveDatabase();
             logger.info('Database initialized with schema and seed data.');
             logger.info('Default admin: username=admin, password=admin123');
         } else {
             logger.info('Database already initialized.');
         }
 
-        return db;
+        client.release();
+        return pool;
     } catch (error) {
         logger.error('Failed to initialize database:', error);
         throw error;
@@ -115,42 +91,37 @@ async function initializeDatabase() {
 /**
  * Helper: Execute a query and return all results as array of objects
  */
-function queryAll(sql, params = []) {
-    const stmt = db.prepare(sql);
-    if (params.length > 0) stmt.bind(params);
-    const results = [];
-    while (stmt.step()) {
-        results.push(stmt.getAsObject());
-    }
-    stmt.free();
-    return results;
+async function queryAll(sql, params = []) {
+    const result = await pool.query(sql, params);
+    return result.rows;
 }
 
 /**
  * Helper: Execute a query and return first result as object
  */
-function queryOne(sql, params = []) {
-    const results = queryAll(sql, params);
-    return results.length > 0 ? results[0] : null;
+async function queryOne(sql, params = []) {
+    const result = await pool.query(sql, params);
+    return result.rows[0] || null;
 }
 
 /**
- * Helper: Execute a write query (INSERT, UPDATE, DELETE) and return info
+ * Helper: Execute a write query (INSERT, UPDATE, DELETE)
+ * Returns { lastInsertRowid, changes } for compatibility
  */
-function runQuery(sql, params = []) {
-    db.run(sql, params);
-    const lastId = db.exec('SELECT last_insert_rowid() as id')[0]?.values[0][0];
-    const changes = db.getRowsModified();
-    saveDatabase();
-    return { lastInsertRowid: lastId, changes };
+async function runQuery(sql, params = []) {
+    const result = await pool.query(sql, params);
+    return {
+        lastInsertRowid: result.rows[0]?.id || null,
+        changes: result.rowCount,
+        row: result.rows[0] || null,
+    };
 }
 
 /**
- * Get the database instance
+ * Get the pool instance
  */
 function getDb() {
-    if (!db) throw new Error('Database not initialized. Call initializeDatabase() first.');
-    return db;
+    return pool;
 }
 
-module.exports = { initializeDatabase, getDb, queryAll, queryOne, runQuery, saveDatabase };
+module.exports = { initializeDatabase, getDb, queryAll, queryOne, runQuery };

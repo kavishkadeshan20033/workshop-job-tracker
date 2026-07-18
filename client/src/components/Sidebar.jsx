@@ -1,15 +1,17 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     HiOutlineViewGrid, HiOutlineBriefcase, HiOutlineUsers,
     HiOutlineCube, HiOutlineDocumentText, HiOutlineChartBar,
     HiOutlineLogout, HiOutlineUserGroup, HiOutlineIdentification,
-    HiOutlineTruck
+    HiOutlineTruck, HiOutlineMenu, HiOutlineX
 } from 'react-icons/hi';
 import { FaWrench } from 'react-icons/fa';
 
 export default function Sidebar() {
     const { user, logout, isAdmin } = useAuth();
+    const [mobileOpen, setMobileOpen] = useState(false);
 
     const navItems = [
         { path: '/', icon: <HiOutlineViewGrid />, label: 'Dashboard' },
@@ -30,8 +32,10 @@ export default function Sidebar() {
         ? user.username.slice(0, 2).toUpperCase()
         : 'U';
 
-    return (
-        <aside className="sidebar">
+    const closeMobile = () => setMobileOpen(false);
+
+    const SidebarContent = () => (
+        <>
             {/* Logo */}
             <div className="sidebar-header">
                 <div className="sidebar-logo">
@@ -43,6 +47,10 @@ export default function Sidebar() {
                         <span className="sidebar-logo-subtitle">Job Management</span>
                     </div>
                 </div>
+                {/* Mobile close button */}
+                <button className="sidebar-mobile-close" onClick={closeMobile}>
+                    <HiOutlineX />
+                </button>
             </div>
 
             {/* Navigation */}
@@ -54,6 +62,7 @@ export default function Sidebar() {
                         to={item.path}
                         end={item.path === '/'}
                         className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                        onClick={closeMobile}
                     >
                         <span className="sidebar-link-icon">{item.icon}</span>
                         {item.label}
@@ -68,6 +77,7 @@ export default function Sidebar() {
                                 key={item.path}
                                 to={item.path}
                                 className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+                                onClick={closeMobile}
                             >
                                 <span className="sidebar-link-icon">{item.icon}</span>
                                 {item.label}
@@ -77,7 +87,7 @@ export default function Sidebar() {
                 )}
 
                 <div className="sidebar-section-title">Account</div>
-                <button className="sidebar-link" onClick={logout}>
+                <button className="sidebar-link" onClick={() => { logout(); closeMobile(); }}>
                     <span className="sidebar-link-icon"><HiOutlineLogout /></span>
                     Sign Out
                 </button>
@@ -91,6 +101,38 @@ export default function Sidebar() {
                     <div className="sidebar-user-role">{user?.role || 'technician'}</div>
                 </div>
             </div>
-        </aside>
+        </>
+    );
+
+    return (
+        <>
+            {/* Mobile Top Bar */}
+            <div className="mobile-topbar">
+                <div className="mobile-topbar-brand">
+                    <div className="sidebar-logo-icon" style={{ width: 30, height: 30, fontSize: '0.9rem' }}>
+                        <FaWrench />
+                    </div>
+                    <span className="sidebar-logo-title">WorkshopTracker</span>
+                </div>
+                <button className="mobile-menu-btn" onClick={() => setMobileOpen(true)}>
+                    <HiOutlineMenu />
+                </button>
+            </div>
+
+            {/* Overlay for mobile */}
+            {mobileOpen && (
+                <div className="sidebar-overlay" onClick={closeMobile} />
+            )}
+
+            {/* Desktop sidebar */}
+            <aside className="sidebar sidebar-desktop">
+                <SidebarContent />
+            </aside>
+
+            {/* Mobile drawer */}
+            <aside className={`sidebar sidebar-mobile-drawer ${mobileOpen ? 'open' : ''}`}>
+                <SidebarContent />
+            </aside>
+        </>
     );
 }

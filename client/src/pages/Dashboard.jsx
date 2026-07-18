@@ -92,11 +92,7 @@ export default function Dashboard() {
     return (
         <div className="fade-in">
             {/* Page Header */}
-            <div style={{
-                background: 'white',
-                borderBottom: '1px solid var(--border-light)',
-                padding: 'var(--spacing-xl) var(--spacing-2xl)',
-            }}>
+            <div className="dashboard-header">
                 <h1 className="page-title">Dashboard</h1>
                 <p className="page-subtitle">
                     {format(new Date(), 'EEEE, MMMM d, yyyy')} — Workshop overview at a glance.
@@ -105,12 +101,7 @@ export default function Dashboard() {
 
             <div className="page-container">
                 {/* Stat Cards */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(5, 1fr)',
-                    gap: 'var(--spacing-md)',
-                    marginBottom: 'var(--spacing-xl)',
-                }}>
+                <div className="stat-cards-grid">
                     {statCards.map((s) => (
                         <div className="stat-card" key={s.label}>
                             <div className="stat-card-accent" style={{ background: s.accent }} />
@@ -127,11 +118,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Content Grid */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '2fr 1fr',
-                    gap: 'var(--spacing-lg)',
-                }}>
+                <div className="dashboard-content-grid">
                     {/* Recent Jobs */}
                     <div className="card">
                         <div className="card-header">

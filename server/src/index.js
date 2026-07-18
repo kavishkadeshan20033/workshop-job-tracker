@@ -15,6 +15,7 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 // Route imports
 const authRoutes = require('./routes/auth');
 const customerRoutes = require('./routes/customers');
+const vehicleRoutes = require('./routes/vehicles');
 const userRoutes = require('./routes/users');
 const technicianRoutes = require('./routes/technicians');
 const jobRoutes = require('./routes/jobs');
@@ -59,6 +60,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 // ============================================
 app.use('/api/auth', authRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/technicians', technicianRoutes);
 app.use('/api/jobs', jobRoutes);

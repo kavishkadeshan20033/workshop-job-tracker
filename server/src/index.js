@@ -93,7 +93,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // ============================================
-// Start Server
+// Start Server (Standalone) or Export (Serverless)
 // ============================================
 async function startServer() {
     try {
@@ -108,4 +108,8 @@ async function startServer() {
     }
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+    startServer();
+}
+
+module.exports = app;

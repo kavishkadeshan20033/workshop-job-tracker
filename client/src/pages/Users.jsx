@@ -146,10 +146,12 @@ export default function Users() {
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <div className="form-group">
-                        <label className="form-label">{editingUser ? 'New Password (leave blank to keep current)' : 'Password'}</label>
-                        <input type="password" name="password" className="form-input" required={!editingUser} />
-                    </div>
+                    {!editingUser && (
+                        <div className="form-group">
+                            <label className="form-label">Password</label>
+                            <input type="password" name="password" className="form-input" required />
+                        </div>
+                    )}
                     <div className="flex gap-md" style={{ marginTop: 'var(--spacing-xl)' }}>
                         <button type="button" className="btn btn-secondary flex-1" onClick={() => setIsModalOpen(false)}>Cancel</button>
                         <button type="submit" className="btn btn-primary flex-1">Save User</button>

@@ -17,8 +17,7 @@ const authController = {
                 return res.status(400).json({ error: 'Email already exists' });
             }
 
-            const password_hash = await hashPassword(password);
-            const user = UserModel.create({ username, email, password_hash, full_name, role: role || 'technician' });
+            const user = UserModel.create({ username, email, password, full_name, role: role || 'employee' });
 
             AuditModel.log({
                 user_id: req.user?.id || user.id,

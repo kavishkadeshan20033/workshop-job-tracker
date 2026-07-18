@@ -33,7 +33,11 @@ const userController = {
             const existing = UserModel.findById(req.params.id);
             if (!existing) return res.status(404).json({ error: 'User not found' });
             
-            const user = UserModel.update(req.params.id, req.body);
+            // Admins cannot update other users' passwords
+            const updateData = { ...req.body };
+            delete updateData.password;
+
+            const user = UserModel.update(req.params.id, updateData);
             AuditModel.log({ user_id: req.user.id, action: 'UPDATE', entity: 'users', entity_id: user.id, ip_address: req.ip });
             res.json(user);
         } catch (error) { next(error); }

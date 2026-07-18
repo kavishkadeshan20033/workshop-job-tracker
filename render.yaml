@@ -12,13 +12,7 @@ services:
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 24h
-      - key: DATABASE_URL
-        fromDatabase:
-          name: workshop-db
-          property: connectionString
-
-databases:
-  - name: workshop-db
-    plan: free
-    databaseName: workshop_job_tracker
-    user: workshop_user
+      - key: DB_PATH
+        value: ./database/workshop.db
+      - key: PORT
+        value: 3000

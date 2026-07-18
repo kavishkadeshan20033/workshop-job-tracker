@@ -1,11 +1,11 @@
 const JobModel = require('../models/Job');
 
 const reportController = {
-    getDailyReport(req, res, next) {
+    async getDailyReport(req, res, next) {
         try {
             const { date } = req.query;
             if (!date) return res.status(400).json({ error: 'Date parameter is required (YYYY-MM-DD)' });
-            const jobs = JobModel.getDailyReport(date);
+            const jobs = await JobModel.getDailyReport(date);
             const summary = {
                 date,
                 total_jobs: jobs.length,
@@ -18,11 +18,11 @@ const reportController = {
         } catch (error) { next(error); }
     },
 
-    getMonthlyReport(req, res, next) {
+    async getMonthlyReport(req, res, next) {
         try {
             const { year, month } = req.query;
             if (!year || !month) return res.status(400).json({ error: 'Year and month parameters are required' });
-            const jobs = JobModel.getMonthlyReport(year, month);
+            const jobs = await JobModel.getMonthlyReport(year, month);
             const summary = {
                 year: parseInt(year),
                 month: parseInt(month),

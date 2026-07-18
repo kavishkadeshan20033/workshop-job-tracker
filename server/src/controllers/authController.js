@@ -9,17 +9,16 @@ const authController = {
         try {
             const { username, email, password, full_name, role } = req.body;
 
-            // Check if username or email already exists
-            if (UserModel.findByUsername(username)) {
+            if (await UserModel.findByUsername(username)) {
                 return res.status(400).json({ error: 'Username already exists' });
             }
-            if (UserModel.findByEmail(email)) {
+            if (await UserModel.findByEmail(email)) {
                 return res.status(400).json({ error: 'Email already exists' });
             }
 
-            const user = UserModel.create({ username, email, password, full_name, role: role || 'employee' });
+            const user = await UserModel.create({ username, email, password, full_name, role: role || 'employee' });
 
-            AuditModel.log({
+            await AuditModel.log({
                 user_id: req.user?.id || user.id,
                 action: 'REGISTER',
                 entity: 'users',
@@ -38,7 +37,7 @@ const authController = {
     async login(req, res, next) {
         try {
             const { username, password } = req.body;
-            const user = UserModel.findByUsername(username);
+            const user = await UserModel.findByUsername(username);
 
             if (!user) {
                 return res.status(401).json({ error: 'Invalid username or password' });
@@ -53,7 +52,7 @@ const authController = {
                 return res.status(401).json({ error: 'Invalid username or password' });
             }
 
-            AuditModel.log({
+            await AuditModel.log({
                 user_id: user.id,
                 action: 'LOGIN',
                 entity: 'users',
@@ -73,9 +72,9 @@ const authController = {
         }
     },
 
-    getProfile(req, res, next) {
+    async getProfile(req, res, next) {
         try {
-            const user = UserModel.findById(req.user.id);
+            const user = await UserModel.findById(req.user.id);
             if (!user) return res.status(404).json({ error: 'User not found' });
             res.json(user);
         } catch (error) {
@@ -83,9 +82,9 @@ const authController = {
         }
     },
 
-    getUsers(req, res, next) {
+    async getUsers(req, res, next) {
         try {
-            const users = UserModel.findAll();
+            const users = await UserModel.findAll();
             res.json(users);
         } catch (error) {
             next(error);

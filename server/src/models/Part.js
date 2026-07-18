@@ -4,8 +4,8 @@ const PartModel = {
     async findAll(search = '') {
         if (search) {
             return queryAll(
-                `SELECT * FROM parts WHERE name ILIKE $1 OR part_number ILIKE $1 OR category ILIKE $1 OR supplier ILIKE $1 ORDER BY name ASC`,
-                [`%${search}%`]
+                `SELECT * FROM parts WHERE name LIKE ? OR part_number LIKE ? OR category LIKE ? OR supplier LIKE ? ORDER BY name ASC`,
+                [`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`]
             );
         }
         return queryAll('SELECT * FROM parts ORDER BY name ASC');
@@ -16,36 +16,30 @@ const PartModel = {
     },
 
     async findById(id) {
-        return queryOne('SELECT * FROM parts WHERE id = $1', [id]);
+        return queryOne('SELECT * FROM parts WHERE id = ?', [id]);
     },
 
     async create({ name, part_number, stock_qty, unit_price, reorder_level, supplier, category }) {
         const result = await runQuery(
-            'INSERT INTO parts (name, part_number, stock_qty, unit_price, reorder_level, supplier, category) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            [name, part_number || null, stock_qty !== undefined ? stock_qty : 0, unit_price !== undefined ? unit_price : 0, reorder_level !== undefined ? reorder_level : 5, supplier || null, category || null]
+            'INSERT INTO parts (name, part_number, stock_qty, unit_price, reorder_level, supplier, category) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [name, part_number, stock_qty !== undefined ? stock_qty : 0, unit_price !== undefined ? unit_price : 0, reorder_level !== undefined ? reorder_level : 5, supplier || null, category || null]
         );
         return this.findById(result.lastInsertRowid);
     },
 
     async update(id, { name, part_number, stock_qty, unit_price, reorder_level, supplier, category }) {
         await runQuery(
-            `UPDATE parts SET
-                name = COALESCE($1, name),
-                part_number = COALESCE($2, part_number),
-                stock_qty = COALESCE($3, stock_qty),
-                unit_price = COALESCE($4, unit_price),
-                reorder_level = COALESCE($5, reorder_level),
-                supplier = COALESCE($6, supplier),
-                category = COALESCE($7, category),
-                updated_at = NOW()
-            WHERE id = $8`,
+            `UPDATE parts SET name = COALESCE(?, name), part_number = COALESCE(?, part_number),
+            stock_qty = COALESCE(?, stock_qty), unit_price = COALESCE(?, unit_price),
+            reorder_level = COALESCE(?, reorder_level), supplier = COALESCE(?, supplier), category = COALESCE(?, category),
+            updated_at = NOW() WHERE id = ?`,
             [name || null, part_number || null, stock_qty !== undefined ? stock_qty : null, unit_price !== undefined ? unit_price : null, reorder_level !== undefined ? reorder_level : null, supplier || null, category || null, id]
         );
         return this.findById(id);
     },
 
     async delete(id) {
-        return runQuery('DELETE FROM parts WHERE id = $1', [id]);
+        return runQuery('DELETE FROM parts WHERE id = ?', [id]);
     },
 };
 

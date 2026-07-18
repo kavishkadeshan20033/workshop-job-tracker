@@ -2,21 +2,21 @@ const VehicleModel = require('../models/Vehicle');
 const AuditModel = require('../models/Audit');
 
 const vehicleController = {
-    getAll(req, res, next) {
+    async getAll(req, res, next) {
         try {
             const { customer_id } = req.query;
             const vehicles = customer_id 
-                ? VehicleModel.findByCustomerId(customer_id)
-                : VehicleModel.findAll();
+                ? await VehicleModel.findByCustomerId(customer_id)
+                : await VehicleModel.findAll();
             res.json(vehicles);
         } catch (error) {
             next(error);
         }
     },
 
-    getById(req, res, next) {
+    async getById(req, res, next) {
         try {
-            const vehicle = VehicleModel.findById(req.params.id);
+            const vehicle = await VehicleModel.findById(req.params.id);
             if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
             res.json(vehicle);
         } catch (error) {
@@ -24,11 +24,11 @@ const vehicleController = {
         }
     },
 
-    create(req, res, next) {
+    async create(req, res, next) {
         try {
-            const vehicle = VehicleModel.create(req.body);
+            const vehicle = await VehicleModel.create(req.body);
             
-            AuditModel.log({
+            await AuditModel.log({
                 user_id: req.user.id,
                 action: 'CREATE',
                 entity: 'vehicles',
@@ -42,12 +42,12 @@ const vehicleController = {
         }
     },
 
-    update(req, res, next) {
+    async update(req, res, next) {
         try {
-            const vehicle = VehicleModel.update(req.params.id, req.body);
+            const vehicle = await VehicleModel.update(req.params.id, req.body);
             if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
 
-            AuditModel.log({
+            await AuditModel.log({
                 user_id: req.user.id,
                 action: 'UPDATE',
                 entity: 'vehicles',
@@ -61,14 +61,14 @@ const vehicleController = {
         }
     },
 
-    delete(req, res, next) {
+    async delete(req, res, next) {
         try {
-            const vehicle = VehicleModel.findById(req.params.id);
+            const vehicle = await VehicleModel.findById(req.params.id);
             if (!vehicle) return res.status(404).json({ error: 'Vehicle not found' });
 
-            VehicleModel.delete(req.params.id);
+            await VehicleModel.delete(req.params.id);
 
-            AuditModel.log({
+            await AuditModel.log({
                 user_id: req.user.id,
                 action: 'DELETE',
                 entity: 'vehicles',

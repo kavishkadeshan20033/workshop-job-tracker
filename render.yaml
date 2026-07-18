@@ -1,11 +1,10 @@
 services:
   - type: web
-    name: workshop-job-tracker-api
+    name: workshop-job-tracker
     runtime: node
     plan: free
-    rootDir: server
-    buildCommand: npm install
-    startCommand: node src/index.js
+    buildCommand: npm run render-build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -15,5 +14,5 @@ services:
         value: 24h
       - key: DB_PATH
         value: ./database/workshop.db
-      - key: CLIENT_URL
-        value: https://your-app.vercel.app
+      - key: PORT
+        value: 3000

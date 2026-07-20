@@ -7,7 +7,7 @@ const logger = require('../middleware/logger');
 const authController = {
     async register(req, res, next) {
         try {
-            const { username, email, password, full_name, role } = req.body;
+            const { username, email, password, full_name } = req.body;
 
             if (await UserModel.findByUsername(username)) {
                 return res.status(400).json({ error: 'Username already exists' });
@@ -16,7 +16,7 @@ const authController = {
                 return res.status(400).json({ error: 'Email already exists' });
             }
 
-            const user = await UserModel.create({ username, email, password, full_name, role: role || 'employee' });
+            const user = await UserModel.create({ username, email, password, full_name, role: 'employee' });
 
             await AuditModel.log({
                 user_id: req.user?.id || user.id,

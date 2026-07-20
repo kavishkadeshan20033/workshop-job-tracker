@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { jobAPI, customerAPI, technicianAPI } from '../services/api';
+import { jobAPI, customerAPI, technicianAPI, vehicleAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle } from 'react-icons/hi';
 import Modal from '../components/Modal';
@@ -29,6 +29,7 @@ export default function Jobs() {
     const [jobs, setJobs] = useState([]);
     const [customers, setCustomers] = useState([]);
     const [technicians, setTechnicians] = useState([]);
+    const [vehicles, setVehicles] = useState([]);
     const [loading, setLoading] = useState(true);
     
     // Search & Filter
@@ -37,6 +38,7 @@ export default function Jobs() {
     
     // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [createCustomerId, setCreateCustomerId] = useState('');
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     
     // Selected Job for View Modal
@@ -46,14 +48,16 @@ export default function Jobs() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [jobsRes, custRes, techRes] = await Promise.all([
+            const [jobsRes, custRes, techRes, vehRes] = await Promise.all([
                 jobAPI.getAll({ search, status: statusFilter }),
                 customerAPI.getAll(),
-                technicianAPI.getAll()
+                technicianAPI.getAll(),
+                vehicleAPI.getAll()
             ]);
             setJobs(jobsRes.data);
             setCustomers(custRes.data);
             setTechnicians(techRes.data);
+            setVehicles(vehRes.data || []);
         } catch (error) {
             toast.error('Failed to load data');
         } finally {
@@ -71,6 +75,7 @@ export default function Jobs() {
         const data = Object.fromEntries(formData.entries());
 
         if (!data.technician_id) delete data.technician_id;
+        if (!data.vehicle_id) delete data.vehicle_id;
 
         try {
             await jobAPI.create(data);
@@ -228,9 +233,18 @@ export default function Jobs() {
                 <form onSubmit={handleCreateJob} className="form">
                     <div className="form-group">
                         <label className="form-label">Customer</label>
-                        <select name="customer_id" className="form-input" required>
+                        <select name="customer_id" className="form-input" required value={createCustomerId} onChange={(e) => setCreateCustomerId(e.target.value)}>
                             <option value="">Select a customer...</option>
                             {customers.map(c => <option key={c.id} value={c.id}>{c.first_name} {c.last_name}</option>)}
+                        </select>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Vehicle</label>
+                        <select name="vehicle_id" className="form-input" disabled={!createCustomerId}>
+                            <option value="">-- Select a vehicle (Optional) --</option>
+                            {vehicles.filter(v => v.customer_id.toString() === createCustomerId).map(v => (
+                                <option key={v.id} value={v.id}>{v.make} {v.model} ({v.year}) - {v.license_plate}</option>
+                            ))}
                         </select>
                     </div>
                     <div className="form-group">

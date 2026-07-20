@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS technicians (
 CREATE TABLE IF NOT EXISTS jobs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
+    vehicle_id INT,
     technician_id INT,
     created_by INT NOT NULL,
     device_name VARCHAR(255) NOT NULL,
@@ -57,6 +58,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_at DATETIME NOT NULL DEFAULT NOW(),
     updated_at DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW(),
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL,
     FOREIGN KEY (technician_id) REFERENCES technicians(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
@@ -143,6 +145,7 @@ CREATE TABLE IF NOT EXISTS vehicles (
 -- Indexes
 CREATE INDEX idx_vehicles_customer ON vehicles(customer_id);
 CREATE INDEX idx_jobs_customer ON jobs(customer_id);
+CREATE INDEX idx_jobs_vehicle ON jobs(vehicle_id);
 CREATE INDEX idx_jobs_technician ON jobs(technician_id);
 CREATE INDEX idx_jobs_status ON jobs(status);
 CREATE INDEX idx_job_parts_job ON job_parts(job_id);

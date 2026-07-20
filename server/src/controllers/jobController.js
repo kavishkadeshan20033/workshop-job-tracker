@@ -6,7 +6,7 @@ const jobController = {
     async getAll(req, res, next) {
         try {
             const { status, search } = req.query;
-            const jobs = await JobModel.findAll(search, status);
+            const jobs = await JobModel.findAll(search, status, req.user);
             res.json(jobs);
         } catch (error) { next(error); }
     },
@@ -49,6 +49,25 @@ const jobController = {
             if (!existing) return res.status(404).json({ error: 'Job not found' });
             
             const job = await JobModel.update(req.params.id, { status: req.body.status });
+            
+            if (req.body.status === 'completed' && existing.status !== 'completed') {
+                const InvoiceModel = require('../models/Invoice');
+                const existingInvoice = await InvoiceModel.findByJobId(job.id);
+                if (!existingInvoice) {
+                    const db = require('../config/db');
+                    const partsRow = await db.queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [job.id]);
+                    const partsTotal = partsRow?.total || 0;
+                    const laborTotal = Math.max(0, (job.estimated_cost || 0) - partsTotal);
+                    
+                    await InvoiceModel.create({
+                        job_id: job.id,
+                        labor_total: laborTotal,
+                        tax_rate: 0.10,
+                        notes: 'Auto-generated invoice from job completion.'
+                    });
+                }
+            }
+
             await AuditModel.log({ user_id: req.user.id, action: 'STATUS_CHANGE', entity: 'jobs', entity_id: job.id, details: `Status: ${req.body.status}`, ip_address: req.ip });
             res.json(job);
         } catch (error) { next(error); }

@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { jobAPI, partAPI } from '../services/api';
 import {
-    HiOutlineBriefcase, HiOutlineClock, HiOutlineCheckCircle,
-    HiOutlineExclamation, HiOutlineCalendar, HiOutlineArrowRight
+    HiOutlineBriefcase, HiOutlineCheckCircle,
+    HiOutlineArrowRight, HiOutlineUsers, 
+    HiOutlineTruck, HiOutlineChartBar
 } from 'react-icons/hi';
 import { format } from 'date-fns';
 
@@ -48,44 +49,44 @@ export default function Dashboard() {
 
     const statCards = [
         {
-            label: 'Total Jobs',
-            value: stats?.total || 0,
-            icon: <HiOutlineBriefcase size={24} />,
+            label: 'Total Customers',
+            value: stats?.total_customers || 0,
+            icon: <HiOutlineUsers size={24} />,
             color: '#1a1a1a',
             iconBg: '#f0f0f0',
             accent: 'linear-gradient(90deg, #1a1a1a, #444)',
         },
         {
-            label: 'Pending',
-            value: stats?.pending || 0,
-            icon: <HiOutlineClock size={24} />,
-            color: '#d97706',
-            iconBg: '#fef3c7',
-            accent: 'linear-gradient(90deg, #d97706, #f59e0b)',
-        },
-        {
-            label: 'In Progress',
-            value: stats?.in_progress || 0,
-            icon: <HiOutlineCalendar size={24} />,
+            label: 'Total Vehicles',
+            value: stats?.total_vehicles || 0,
+            icon: <HiOutlineTruck size={24} />,
             color: '#2a6fdb',
             iconBg: '#dbeafe',
             accent: 'linear-gradient(90deg, #2a6fdb, #60a5fa)',
         },
         {
-            label: 'Waiting Parts',
-            value: stats?.waiting_parts || 0,
-            icon: <HiOutlineExclamation size={24} />,
-            color: '#e63946',
-            iconBg: '#fee2e2',
-            accent: 'linear-gradient(90deg, #e63946, #f87171)',
+            label: 'Active Jobs',
+            value: stats?.active_jobs || 0,
+            icon: <HiOutlineBriefcase size={24} />,
+            color: '#d97706',
+            iconBg: '#fef3c7',
+            accent: 'linear-gradient(90deg, #d97706, #f59e0b)',
         },
         {
-            label: 'Completed',
-            value: stats?.completed || 0,
+            label: 'Completed Jobs',
+            value: stats?.completed_jobs || 0,
             icon: <HiOutlineCheckCircle size={24} />,
             color: '#16a34a',
             iconBg: '#dcfce7',
             accent: 'linear-gradient(90deg, #16a34a, #34d399)',
+        },
+        {
+            label: 'Monthly Revenue',
+            value: `$${Number(stats?.monthly_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`,
+            icon: <HiOutlineChartBar size={24} />,
+            color: '#8b5cf6',
+            iconBg: '#ede9fe',
+            accent: 'linear-gradient(90deg, #8b5cf6, #a78bfa)',
         },
     ];
 

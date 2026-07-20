@@ -1,6 +1,6 @@
 # Workshop Job Tracker
 
-A full-stack web application for managing workshop/repair jobs. Built with Node.js, Express, SQLite, and React.
+A full-stack web application for managing workshop/repair jobs. Built with Node.js, Express, MySQL, and React.
 
 ## Features
 
@@ -19,7 +19,7 @@ A full-stack web application for managing workshop/repair jobs. Built with Node.
 
 | Layer | Technology |
 |---|---|
-| Database | SQLite (via sql.js) |
+| Database | MySQL |
 | Backend | Node.js + Express.js |
 | Frontend | React (Vite) |
 | Auth | bcryptjs + JWT |
@@ -31,6 +31,7 @@ A full-stack web application for managing workshop/repair jobs. Built with Node.
 
 - **Node.js** v18+ installed
 - **npm** (comes with Node.js)
+- **MySQL** server running locally or remotely
 
 ## Quick Start
 
@@ -40,24 +41,28 @@ git clone <repository-url>
 cd workshopjob
 ```
 
-### 2. Start the Backend
+### 2. Database Setup
+1. Create a new MySQL database.
+2. Import the schema file located at `server/database/mysql_schema.sql` into your database to create the required tables.
+
+### 3. Start the Backend
 ```bash
 cd server
-cp .env.example .env    # Create environment file
+cp .env.example .env    # Create environment file and update DB credentials (DB_HOST, DB_USER, DB_PASSWORD, DB_NAME)
 npm install             # Install dependencies
 npm start               # Start server on http://localhost:3000
 ```
 
-The database will be automatically created and seeded on first run.
+The database will be automatically seeded with default admin and parts on first run.
 
-### 3. Start the Frontend
+### 4. Start the Frontend
 ```bash
 cd client
 npm install             # Install dependencies
 npm run dev             # Start dev server on http://localhost:5173
 ```
 
-### 4. Open the App
+### 5. Open the App
 Navigate to **http://localhost:5173** in your browser.
 
 **Default Admin Credentials:**

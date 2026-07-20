@@ -20,7 +20,7 @@ const JobModel = {
         const params = [];
 
         if (user && user.role === 'employee') {
-            sql += ` AND t.user_id = ?`;
+            sql += ` AND (t.user_id = ? OR j.technician_id IS NULL)`;
             params.push(user.id);
         }
 

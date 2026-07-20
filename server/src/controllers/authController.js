@@ -18,6 +18,14 @@ const authController = {
 
             const user = await UserModel.create({ username, email, password, full_name, role: 'employee' });
 
+            const TechnicianModel = require('../models/Technician');
+            await TechnicianModel.create({
+                user_id: user.id,
+                name: full_name,
+                specialization: 'General',
+                phone: ''
+            });
+
             await AuditModel.log({
                 user_id: req.user?.id || user.id,
                 action: 'REGISTER',

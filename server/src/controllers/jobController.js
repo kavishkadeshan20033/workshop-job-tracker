@@ -27,6 +27,16 @@ const jobController = {
         try {
             const jobData = { ...req.body, created_by: req.user.id };
             const job = await JobModel.create(jobData);
+            
+            if (jobData.technician_id) {
+                const TechnicianModel = require('../models/Technician');
+                const technician = await TechnicianModel.findById(jobData.technician_id);
+                if (technician && technician.email) {
+                    const { sendJobAssignmentEmail } = require('../utils/mailer');
+                    await sendJobAssignmentEmail(technician.email, technician.name, job);
+                }
+            }
+
             await AuditModel.log({ user_id: req.user.id, action: 'CREATE', entity: 'jobs', entity_id: job.id, ip_address: req.ip });
             res.status(201).json(job);
         } catch (error) { next(error); }
@@ -38,6 +48,16 @@ const jobController = {
             if (!existing) return res.status(404).json({ error: 'Job not found' });
             
             const job = await JobModel.update(req.params.id, req.body);
+            
+            if (req.body.technician_id && req.body.technician_id != existing.technician_id) {
+                const TechnicianModel = require('../models/Technician');
+                const technician = await TechnicianModel.findById(req.body.technician_id);
+                if (technician && technician.email) {
+                    const { sendJobAssignmentEmail } = require('../utils/mailer');
+                    await sendJobAssignmentEmail(technician.email, technician.name, job);
+                }
+            }
+
             await AuditModel.log({ user_id: req.user.id, action: 'UPDATE', entity: 'jobs', entity_id: job.id, ip_address: req.ip });
             res.json(job);
         } catch (error) { next(error); }

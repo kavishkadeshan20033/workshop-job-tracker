@@ -75,7 +75,7 @@ export default function Reports() {
         doc.text(`Completed: ${report.summary.completed}`, 14, 48);
         doc.text(`In Progress: ${report.summary.in_progress}`, 80, 42);
         doc.text(`Pending: ${report.summary.pending}`, 80, 48);
-        doc.text(`Total Projected Value: $${report.summary.total_revenue.toFixed(2)}`, 140, 42);
+        doc.text(`Total Projected Value: $${Number(report.summary.total_revenue || 0).toFixed(2)}`, 140, 42);
 
         // Table
         doc.autoTable({
@@ -87,7 +87,7 @@ export default function Reports() {
                 j.problem_description?.substring(0, 30), 
                 j.customer_name, 
                 j.status.replace('_', ' '), 
-                `$${(j.final_cost || j.estimated_cost || 0).toFixed(2)}`
+                `$${Number(j.final_cost || j.estimated_cost || 0).toFixed(2)}`
             ]),
             styles: { fontSize: 8, cellPadding: 3 },
             headStyles: { fillColor: [59, 130, 246], textColor: 255 },
@@ -168,7 +168,7 @@ export default function Reports() {
                         </div>
                         <div className="card text-center" style={{ borderTop: '3px solid #6366f1' }}>
                             <div className="text-sm text-muted mb-xs">Projected Value</div>
-                            <div className="text-2xl font-bold text-primary">${report.summary.total_revenue.toFixed(2)}</div>
+                            <div className="text-2xl font-bold text-primary">${Number(report.summary.total_revenue || 0).toFixed(2)}</div>
                         </div>
                     </div>
 
@@ -216,7 +216,7 @@ export default function Reports() {
                                                             {j.status?.replace('_', ' ')}
                                                         </span>
                                                     </td>
-                                                    <td className="font-semibold">${(j.final_cost || j.estimated_cost || 0).toFixed(2)}</td>
+                                                    <td className="font-semibold">${Number(j.final_cost || j.estimated_cost || 0).toFixed(2)}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

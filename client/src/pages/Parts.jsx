@@ -114,7 +114,7 @@ export default function Parts() {
                                                 {p.stock_qty} (Reorder: {p.reorder_level})
                                             </span>
                                         </td>
-                                        <td>${p.unit_price?.toFixed(2)}</td>
+                                        <td>${Number(p.unit_price || 0).toFixed(2)}</td>
                                         <td className="text-right">
                                             <button className="btn btn-icon btn-ghost" onClick={() => openEdit(p)}><HiPencil /></button>
                                             <button className="btn btn-icon btn-danger" onClick={() => handleDelete(p.id)}><HiTrash /></button>

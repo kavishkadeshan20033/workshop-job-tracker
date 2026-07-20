@@ -119,7 +119,7 @@ export default function Invoices() {
                                         <td>#{inv.job_id}</td>
                                         <td>{inv.customer_name}</td>
                                         <td>{inv.device_name || '—'}</td>
-                                        <td className="font-bold text-success">${inv.total_amount?.toFixed(2)}</td>
+                                        <td className="font-bold text-success">${Number(inv.total_amount || 0).toFixed(2)}</td>
                                         <td>
                                             <select 
                                                 className="form-input" 
@@ -196,22 +196,22 @@ export default function Invoices() {
                         
                         <div className="flex justify-between mb-sm text-sm">
                             <span>Labor Total</span>
-                            <span>${detail.labor_total?.toFixed(2)}</span>
+                            <span>${Number(detail.labor_total || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between mb-sm text-sm">
                             <span>Parts Total</span>
-                            <span>${detail.parts_total?.toFixed(2)}</span>
+                            <span>${Number(detail.parts_total || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between mb-sm text-sm">
-                            <span>Tax ({(detail.tax_rate * 100).toFixed(0)}%)</span>
-                            <span>${detail.tax_amount?.toFixed(2)}</span>
+                            <span>Tax ({(Number(detail.tax_rate || 0) * 100).toFixed(0)}%)</span>
+                            <span>${Number(detail.tax_amount || 0).toFixed(2)}</span>
                         </div>
                         
                         <hr style={{ border: 'none', borderTop: '1px solid var(--border-secondary)', margin: '16px 0' }} />
                         
                         <div className="flex justify-between items-center">
                             <span className="font-bold text-lg">Total</span>
-                            <span className="font-bold text-2xl text-success">${detail.total_amount?.toFixed(2)}</span>
+                            <span className="font-bold text-2xl text-success">${Number(detail.total_amount || 0).toFixed(2)}</span>
                         </div>
                         
                         <div className="mt-md text-right">

@@ -12,7 +12,7 @@ const reportController = {
                 completed: jobs.filter(j => j.status === 'completed').length,
                 in_progress: jobs.filter(j => j.status === 'in_progress').length,
                 pending: jobs.filter(j => j.status === 'pending').length,
-                total_revenue: jobs.reduce((sum, j) => sum + (j.estimated_cost || 0), 0),
+                total_revenue: jobs.reduce((sum, j) => sum + Number(j.estimated_cost || 0), 0),
             };
             res.json({ summary, jobs });
         } catch (error) { next(error); }
@@ -31,7 +31,7 @@ const reportController = {
                 in_progress: jobs.filter(j => j.status === 'in_progress').length,
                 pending: jobs.filter(j => j.status === 'pending').length,
                 cancelled: jobs.filter(j => j.status === 'cancelled').length,
-                total_revenue: jobs.reduce((sum, j) => sum + (j.estimated_cost || 0), 0),
+                total_revenue: jobs.reduce((sum, j) => sum + Number(j.estimated_cost || 0), 0),
             };
             res.json({ summary, jobs });
         } catch (error) { next(error); }

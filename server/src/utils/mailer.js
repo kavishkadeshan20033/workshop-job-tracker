@@ -1,14 +1,27 @@
 const nodemailer = require('nodemailer');
 
 const createTransporter = () => {
-    return nodemailer.createTransport({
+    const port = Number(process.env.SMTP_PORT) || 587;
+    const isGmail = process.env.SMTP_HOST && process.env.SMTP_HOST.includes('gmail');
+    
+    const config = {
         host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-        port: process.env.SMTP_PORT || 587,
+        port: port,
+        secure: port === 465, // Port 465 requires secure: true
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
+        },
+        tls: {
+            rejectUnauthorized: false // Helps avoid self-signed certificate / TLS errors in various hosts
         }
-    });
+    };
+
+    if (isGmail || process.env.SMTP_SERVICE === 'gmail') {
+        config.service = 'gmail';
+    }
+
+    return nodemailer.createTransport(config);
 };
 
 const sendJobAssignmentEmail = async (email, employeeName, jobDetails) => {

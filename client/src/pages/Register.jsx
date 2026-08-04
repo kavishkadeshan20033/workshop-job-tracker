@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FaWrench } from 'react-icons/fa';
+import { HiOutlineUser, HiOutlineMail, HiOutlineLockClosed, HiOutlineIdentification, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
 export default function Register() {
     const [form, setForm] = useState({ username: '', email: '', password: '', full_name: '', role: 'employee' });
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const { register } = useAuth();
@@ -91,23 +93,43 @@ export default function Register() {
                 <form onSubmit={handleSubmit} className="form">
                     <div className="form-group">
                         <label className="form-label">Full Name *</label>
-                        <input className="form-input" type="text" placeholder="John Doe"
-                            value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+                        <div className="form-input-with-icon">
+                            <span className="form-input-icon"><HiOutlineIdentification /></span>
+                            <input className="form-input" type="text" placeholder="John Doe"
+                                value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} />
+                        </div>
                     </div>
                     <div className="form-group">
                         <label className="form-label">Username *</label>
-                        <input className="form-input" type="text" placeholder="johndoe"
-                            value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+                        <div className="form-input-with-icon">
+                            <span className="form-input-icon"><HiOutlineUser /></span>
+                            <input className="form-input" type="text" placeholder="johndoe"
+                                value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
+                        </div>
                     </div>
                     <div className="form-group">
                         <label className="form-label">Email *</label>
-                        <input className="form-input" type="email" placeholder="john@workshop.com"
-                            value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                        <div className="form-input-with-icon">
+                            <span className="form-input-icon"><HiOutlineMail /></span>
+                            <input className="form-input" type="email" placeholder="john@workshop.com"
+                                value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                        </div>
                     </div>
                     <div className="form-group">
                         <label className="form-label">Password * (min 6 chars)</label>
-                        <input className="form-input" type="password" placeholder="••••••••"
-                            value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                        <div className="form-input-with-icon">
+                            <span className="form-input-icon"><HiOutlineLockClosed /></span>
+                            <input className="form-input has-toggle" type={showPassword ? 'text' : 'password'} placeholder="••••••••"
+                                value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+                            <button
+                                type="button"
+                                className="form-input-toggle-btn"
+                                onClick={() => setShowPassword(!showPassword)}
+                                title={showPassword ? 'Hide password' : 'Show password'}
+                            >
+                                {showPassword ? <HiOutlineEyeOff /> : <HiOutlineEye />}
+                            </button>
+                        </div>
                     </div>
 
                     <button

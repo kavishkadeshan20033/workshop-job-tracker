@@ -1,0 +1,11 @@
+# 1. Check changed files
+git status
+
+# 2. Stage all modified and deleted files
+git add .
+
+# 3. Commit the changes
+git commit -m "Remove email feature and add password show/hide toggle button"
+
+# 4. Push to your main GitHub branch
+git push origin main

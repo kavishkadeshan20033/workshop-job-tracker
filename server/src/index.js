@@ -35,7 +35,17 @@ app.use(helmet({
 }));
 app.use(cors({
     origin: process.env.NODE_ENV === 'production'
-        ? [process.env.CLIENT_URL || '*']
+        ? (origin, callback) => {
+            const allowed = [
+                process.env.CLIENT_URL,
+                /\.vercel\.app$/,
+            ].filter(Boolean);
+            if (!origin) return callback(null, true); // allow server-to-server
+            const isAllowed = allowed.some(a =>
+                typeof a === 'string' ? a === origin : a.test(origin)
+            );
+            callback(null, isAllowed ? origin : false);
+        }
         : ['http://localhost:5173', 'http://localhost:3000'],
     credentials: true,
 }));

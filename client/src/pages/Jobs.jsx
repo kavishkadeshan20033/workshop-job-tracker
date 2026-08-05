@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { jobAPI, customerAPI, technicianAPI, vehicleAPI } from '../services/api';
+import { jobAPI, customerAPI, technicianAPI, deviceAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle } from 'react-icons/hi';
 import Modal from '../components/Modal';
@@ -29,7 +29,7 @@ export default function Jobs() {
     const [jobs, setJobs] = useState([]);
     const [customers, setCustomers] = useState([]);
     const [technicians, setTechnicians] = useState([]);
-    const [vehicles, setVehicles] = useState([]);
+    const [devices, setDevices] = useState([]);
     const [loading, setLoading] = useState(true);
     
     // Search & Filter
@@ -48,16 +48,16 @@ export default function Jobs() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [jobsRes, custRes, techRes, vehRes] = await Promise.all([
+            const [jobsRes, custRes, techRes, devRes] = await Promise.all([
                 jobAPI.getAll({ search, status: statusFilter }),
                 customerAPI.getAll(),
                 technicianAPI.getAll(),
-                vehicleAPI.getAll()
+                deviceAPI.getAll()
             ]);
             setJobs(jobsRes.data);
             setCustomers(custRes.data);
             setTechnicians(techRes.data);
-            setVehicles(vehRes.data || []);
+            setDevices(devRes.data || []);
         } catch (error) {
             toast.error('Failed to load data');
         } finally {
@@ -75,7 +75,7 @@ export default function Jobs() {
         const data = Object.fromEntries(formData.entries());
 
         if (!data.technician_id) delete data.technician_id;
-        if (!data.vehicle_id) delete data.vehicle_id;
+        if (!data.device_id) delete data.device_id;
 
         try {
             await jobAPI.create(data);
@@ -239,11 +239,11 @@ export default function Jobs() {
                         </select>
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Vehicle</label>
-                        <select name="vehicle_id" className="form-input" disabled={!createCustomerId}>
-                            <option value="">-- Select a vehicle (Optional) --</option>
-                            {vehicles.filter(v => v.customer_id.toString() === createCustomerId).map(v => (
-                                <option key={v.id} value={v.id}>{v.make} {v.model} ({v.year}) - {v.license_plate}</option>
+                        <label className="form-label">Device (Optional)</label>
+                        <select name="device_id" className="form-input" disabled={!createCustomerId}>
+                            <option value="">-- Select a device (Optional) --</option>
+                            {devices.filter(d => d.customer_id.toString() === createCustomerId).map(d => (
+                                <option key={d.id} value={d.id}>{d.brand} {d.model} ({d.year}) - {d.serial_number}</option>
                             ))}
                         </select>
                     </div>

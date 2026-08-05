@@ -4,7 +4,7 @@ import { jobAPI, partAPI } from '../services/api';
 import {
     HiOutlineBriefcase, HiOutlineCheckCircle,
     HiOutlineArrowRight, HiOutlineUsers, 
-    HiOutlineTruck, HiOutlineChartBar
+    HiOutlineDesktopComputer, HiOutlineChartBar
 } from 'react-icons/hi';
 import { format } from 'date-fns';
 
@@ -57,9 +57,9 @@ export default function Dashboard() {
             accent: 'linear-gradient(90deg, #1a1a1a, #444)',
         },
         {
-            label: 'Total Vehicles',
-            value: stats?.total_vehicles || 0,
-            icon: <HiOutlineTruck size={24} />,
+            label: 'Total Devices',
+            value: stats?.total_devices || 0,
+            icon: <HiOutlineDesktopComputer size={24} />,
             color: '#2a6fdb',
             iconBg: '#dbeafe',
             accent: 'linear-gradient(90deg, #2a6fdb, #60a5fa)',

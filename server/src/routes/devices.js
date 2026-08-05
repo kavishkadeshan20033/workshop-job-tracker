@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const vehicleController = require('../controllers/vehicleController');
+const deviceController = require('../controllers/deviceController');
 const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validate');
 const { body } = require('express-validator');
@@ -11,26 +11,26 @@ router.use(authenticate);
  * @swagger
  * components:
  *   schemas:
- *     Vehicle:
+ *     Device:
  *       type: object
  *       required:
  *         - customer_id
- *         - make
+ *         - brand
  *         - model
  *       properties:
  *         id:
  *           type: integer
  *         customer_id:
  *           type: integer
- *         make:
+ *         brand:
  *           type: string
  *         model:
  *           type: string
  *         year:
  *           type: integer
- *         vin:
+ *         serial_number:
  *           type: string
- *         license_plate:
+ *         device_type:
  *           type: string
  *         created_at:
  *           type: string
@@ -39,10 +39,10 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /api/vehicles:
+ * /api/devices:
  *   get:
- *     summary: Get all vehicles
- *     tags: [Vehicles]
+ *     summary: Get all devices
+ *     tags: [Devices]
  *     parameters:
  *       - in: query
  *         name: customer_id
@@ -51,22 +51,22 @@ router.use(authenticate);
  *         description: Filter by customer ID
  *     responses:
  *       200:
- *         description: List of vehicles
+ *         description: List of devices
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Vehicle'
+ *                 $ref: '#/components/schemas/Device'
  */
-router.get('/', vehicleController.getAll);
+router.get('/', deviceController.getAll);
 
 /**
  * @swagger
- * /api/vehicles/{id}:
+ * /api/devices/{id}:
  *   get:
- *     summary: Get vehicle by ID
- *     tags: [Vehicles]
+ *     summary: Get device by ID
+ *     tags: [Devices]
  *     parameters:
  *       - in: path
  *         name: id
@@ -75,39 +75,39 @@ router.get('/', vehicleController.getAll);
  *           type: integer
  *     responses:
  *       200:
- *         description: Vehicle details
+ *         description: Device details
  */
-router.get('/:id', vehicleController.getById);
+router.get('/:id', deviceController.getById);
 
 /**
  * @swagger
- * /api/vehicles:
+ * /api/devices:
  *   post:
- *     summary: Create a new vehicle
- *     tags: [Vehicles]
+ *     summary: Create a new device
+ *     tags: [Devices]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Vehicle'
+ *             $ref: '#/components/schemas/Device'
  *     responses:
  *       201:
- *         description: Created vehicle
+ *         description: Created device
  */
 router.post('/', [
     body('customer_id').isInt({ min: 1 }).withMessage('Valid customer ID is required'),
-    body('make').notEmpty().withMessage('Make is required'),
+    body('brand').notEmpty().withMessage('Brand is required'),
     body('model').notEmpty().withMessage('Model is required'),
     body('year').optional({ nullable: true, checkFalsy: true }).isInt({ min: 1900, max: new Date().getFullYear() + 1 }),
-], validate, vehicleController.create);
+], validate, deviceController.create);
 
 /**
  * @swagger
- * /api/vehicles/{id}:
+ * /api/devices/{id}:
  *   put:
- *     summary: Update a vehicle
- *     tags: [Vehicles]
+ *     summary: Update a device
+ *     tags: [Devices]
  *     parameters:
  *       - in: path
  *         name: id
@@ -119,24 +119,24 @@ router.post('/', [
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Vehicle'
+ *             $ref: '#/components/schemas/Device'
  *     responses:
  *       200:
- *         description: Updated vehicle
+ *         description: Updated device
  */
 router.put('/:id', [
     body('customer_id').optional().isInt({ min: 1 }),
-    body('make').optional().notEmpty(),
+    body('brand').optional().notEmpty(),
     body('model').optional().notEmpty(),
     body('year').optional({ nullable: true, checkFalsy: true }).isInt({ min: 1900, max: new Date().getFullYear() + 1 }),
-], validate, vehicleController.update);
+], validate, deviceController.update);
 
 /**
  * @swagger
- * /api/vehicles/{id}:
+ * /api/devices/{id}:
  *   delete:
- *     summary: Delete a vehicle
- *     tags: [Vehicles]
+ *     summary: Delete a device
+ *     tags: [Devices]
  *     parameters:
  *       - in: path
  *         name: id
@@ -147,6 +147,6 @@ router.put('/:id', [
  *       200:
  *         description: Deleted successfully
  */
-router.delete('/:id', vehicleController.delete);
+router.delete('/:id', deviceController.delete);
 
 module.exports = router;

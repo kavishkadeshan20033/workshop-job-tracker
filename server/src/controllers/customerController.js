@@ -1,5 +1,5 @@
 const CustomerModel = require('../models/Customer');
-const VehicleModel = require('../models/Vehicle');
+const DeviceModel = require('../models/Device');
 const AuditModel = require('../models/Audit');
 
 const customerController = {
@@ -15,8 +15,8 @@ const customerController = {
         try {
             const customer = await CustomerModel.findById(req.params.id);
             if (!customer) return res.status(404).json({ error: 'Customer not found' });
-            const vehicles = await VehicleModel.findByCustomerId(req.params.id);
-            res.json({ ...customer, vehicles });
+            const devices = await DeviceModel.findByCustomerId(req.params.id);
+            res.json({ ...customer, devices });
         } catch (error) { next(error); }
     },
 

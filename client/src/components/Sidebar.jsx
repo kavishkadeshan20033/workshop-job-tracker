@@ -5,7 +5,7 @@ import {
     HiOutlineViewGrid, HiOutlineBriefcase, HiOutlineUsers,
     HiOutlineCube, HiOutlineDocumentText, HiOutlineChartBar,
     HiOutlineLogout, HiOutlineUserGroup, HiOutlineIdentification,
-    HiOutlineTruck, HiOutlineMenu, HiOutlineX
+    HiOutlineDesktopComputer, HiOutlineMenu, HiOutlineX
 } from 'react-icons/hi';
 import { FaWrench } from 'react-icons/fa';
 
@@ -17,7 +17,7 @@ export default function Sidebar() {
         { path: '/', icon: <HiOutlineViewGrid />, label: 'Dashboard' },
         { path: '/jobs', icon: <HiOutlineBriefcase />, label: 'Jobs' },
         { path: '/customers', icon: <HiOutlineUsers />, label: 'Customers' },
-        { path: '/vehicles', icon: <HiOutlineTruck />, label: 'Vehicles' },
+        { path: '/devices', icon: <HiOutlineDesktopComputer />, label: 'Devices' },
     ];
 
     const adminItems = [

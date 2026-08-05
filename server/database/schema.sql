@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS technicians (
 CREATE TABLE IF NOT EXISTS jobs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id INTEGER NOT NULL,
+    device_id INTEGER,
     technician_id INTEGER,
     created_by INTEGER NOT NULL,
     device_name TEXT NOT NULL,
@@ -56,6 +57,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
+    FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL,
     FOREIGN KEY (technician_id) REFERENCES technicians(id) ON DELETE SET NULL,
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
@@ -126,21 +128,21 @@ CREATE TABLE IF NOT EXISTS audit_log (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- 10. Vehicles
-CREATE TABLE IF NOT EXISTS vehicles (
+-- 10. Devices
+CREATE TABLE IF NOT EXISTS devices (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id INTEGER NOT NULL,
-    make TEXT NOT NULL,
+    brand TEXT NOT NULL,
     model TEXT NOT NULL,
     year INTEGER,
-    vin TEXT,
-    license_plate TEXT,
+    serial_number TEXT,
+    device_type TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 );
 
 -- Indexes
-CREATE INDEX IF NOT EXISTS idx_vehicles_customer ON vehicles(customer_id);
+CREATE INDEX IF NOT EXISTS idx_devices_customer ON devices(customer_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_customer ON jobs(customer_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_technician ON jobs(technician_id);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);

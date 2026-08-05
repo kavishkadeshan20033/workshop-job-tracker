@@ -175,8 +175,8 @@ export default function Reports() {
                     {reportType === 'monthly' && (
                         <div className="grid grid-2 gap-md mb-xl">
                             <div className="card p-md" style={{ borderLeft: '4px solid #8b5cf6' }}>
-                                <div className="text-sm text-muted mb-xs">Most Repaired Vehicle Brand</div>
-                                <div className="text-xl font-bold">{report.summary.top_vehicle || 'N/A'}</div>
+                                <div className="text-sm text-muted mb-xs">Most Repaired Device Brand</div>
+                                <div className="text-xl font-bold">{report.summary.top_device || 'N/A'}</div>
                             </div>
                             <div className="card p-md" style={{ borderLeft: '4px solid #ec4899' }}>
                                 <div className="text-sm text-muted mb-xs">Most Used Spare Part</div>

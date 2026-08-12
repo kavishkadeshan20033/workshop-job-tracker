@@ -740,13 +740,29 @@ select.form-input {
 
 /* Admin: Verification banner */
 .verify-banner {
-  background: linear-gradient(135deg, #fffbeb, #fef3c7);
-  border: 2px solid #f59e0b;
   border-radius: var(--radius-md);
   padding: var(--spacing-lg);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
+  border: 2px solid transparent;
+  transition: all var(--transition-normal);
+}
+
+/* Active state: job is pending verification — bright amber */
+.verify-banner-active {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border-color: #f59e0b;
+}
+
+/* Inactive state: job not yet marked done — muted gray */
+.verify-banner-inactive {
+  background: var(--bg-tertiary);
+  border-color: var(--border-light);
+}
+
+.verify-banner-inactive .verify-banner-icon {
+  color: var(--text-light);
 }
 
 .verify-banner-icon {

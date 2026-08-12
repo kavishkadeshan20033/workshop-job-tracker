@@ -387,27 +387,40 @@ export default function Jobs() {
                         {/* RIGHT COLUMN: Actions & Status */}
                         <div>
 
-                            {/* ===== ADMIN: PENDING VERIFICATION BANNER ===== */}
-                            {isAdmin && isPendingVerification && (
-                                <div className="verify-banner mb-md">
+                            {/* ===== ADMIN: VERIFICATION SECTION (always visible) ===== */}
+                            {isAdmin && (
+                                <div className={`verify-banner mb-md ${isPendingVerification ? 'verify-banner-active' : 'verify-banner-inactive'}`}>
                                     <div className="verify-banner-icon">
                                         <HiClipboardCheck />
                                     </div>
                                     <div className="verify-banner-content">
-                                        <div className="font-semibold mb-xs">Job Marked as Done</div>
-                                        <p className="text-sm m-0 mb-md">The technician has completed this job. Please review and take action.</p>
+                                        {isPendingVerification ? (
+                                            <>
+                                                <div className="font-semibold mb-xs" style={{ color: '#92400e' }}>⏳ Job Marked as Done — Needs Review</div>
+                                                <p className="text-sm m-0 mb-md" style={{ color: '#78350f' }}>The technician has completed this job. Please review and take action.</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="font-semibold mb-xs text-muted">Job Verification</div>
+                                                <p className="text-sm m-0 mb-md text-muted">These actions become available once the technician marks the job as done.</p>
+                                            </>
+                                        )}
                                         <div className="flex gap-sm flex-col">
                                             <button
                                                 id="verify-approve-btn"
                                                 className="btn btn-verify-approve w-full"
+                                                disabled={!isPendingVerification}
                                                 onClick={() => openVerifyModal('approve')}
+                                                title={!isPendingVerification ? 'Job must be marked as done first' : ''}
                                             >
-                                                <HiBadgeCheck className="mr-sm" /> Verify & Finish Job
+                                                <HiBadgeCheck className="mr-sm" /> Verify &amp; Finish Job
                                             </button>
                                             <button
                                                 id="verify-reject-btn"
                                                 className="btn btn-verify-reject w-full"
+                                                disabled={!isPendingVerification}
                                                 onClick={() => openVerifyModal('reject')}
+                                                title={!isPendingVerification ? 'Job must be marked as done first' : ''}
                                             >
                                                 <HiXCircle className="mr-sm" /> Reject — Send Back
                                             </button>
@@ -443,18 +456,19 @@ export default function Jobs() {
                                 </div>
                             )}
 
-                            {/* ===== ADMIN: FULL STATUS PICKER (for non-pending-verify states) ===== */}
-                            {isAdmin && !isPendingVerification && (
+                            {/* ===== ADMIN: FULL STATUS PICKER (always visible for admin) ===== */}
+                            {isAdmin && (
                                 <div className="card p-md mb-md" style={{ background: 'var(--bg-tertiary)' }}>
                                     <h4 className="font-semibold mb-md">Update Status</h4>
                                     <div className="flex flex-col gap-sm">
-                                        {Object.entries(STATUS_LABELS).filter(([val]) => val !== 'done_pending_verification').map(([val, label]) => (
+                                        {Object.entries(STATUS_LABELS).map(([val, label]) => (
                                             <button 
                                                 key={val}
                                                 className={`btn ${selectedJob.status === val ? 'btn-primary' : 'btn-secondary'} w-full text-left`}
                                                 onClick={() => handleStatusChange(selectedJob.id, val)}
                                             >
                                                 {selectedJob.status === val && <HiCheckCircle className="mr-sm" />}
+                                                {val === 'done_pending_verification' ? '⏳ ' : ''}
                                                 {label}
                                             </button>
                                         ))}

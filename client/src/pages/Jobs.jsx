@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { jobAPI, customerAPI, technicianAPI, deviceAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle } from 'react-icons/hi';
+import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle, HiBadgeCheck, HiXCircle, HiClipboardCheck } from 'react-icons/hi';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
@@ -11,6 +11,7 @@ const STATUS_COLORS = {
     assigned: 'badge-info',
     in_progress: 'badge-primary',
     waiting_parts: 'badge-danger',
+    done_pending_verification: 'badge-pending-verify',
     completed: 'badge-success',
     delivered: 'badge-success',
 };
@@ -20,6 +21,7 @@ const STATUS_LABELS = {
     assigned: 'Assigned',
     in_progress: 'In Progress',
     waiting_parts: 'Waiting Parts',
+    done_pending_verification: 'Done – Pending Verify',
     completed: 'Completed',
     delivered: 'Delivered',
 };
@@ -40,7 +42,11 @@ export default function Jobs() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [createCustomerId, setCreateCustomerId] = useState('');
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
-    
+    const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
+    const [verifyAction, setVerifyAction] = useState('approve'); // 'approve' | 'reject'
+    const [verifyNote, setVerifyNote] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
+
     // Selected Job for View Modal
     const [selectedJob, setSelectedJob] = useState(null);
     const [noteDescription, setNoteDescription] = useState('');
@@ -92,13 +98,52 @@ export default function Jobs() {
             await jobAPI.updateStatus(jobId, newStatus);
             toast.success('Status updated');
             
-            // Update local state if modal is open
             if (selectedJob && selectedJob.id === jobId) {
                 setSelectedJob({ ...selectedJob, status: newStatus });
             }
             fetchData();
         } catch (error) {
-            toast.error('Failed to update status');
+            toast.error(error.response?.data?.error || 'Failed to update status');
+        }
+    };
+
+    const handleMarkDone = async () => {
+        if (!selectedJob) return;
+        try {
+            await jobAPI.markDone(selectedJob.id);
+            toast.success('Job marked as done — waiting for admin verification');
+            setSelectedJob({ ...selectedJob, status: 'done_pending_verification' });
+            fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to mark job as done');
+        }
+    };
+
+    const openVerifyModal = (action) => {
+        setVerifyAction(action);
+        setVerifyNote('');
+        setIsVerifyModalOpen(true);
+    };
+
+    const handleVerifyJob = async () => {
+        if (!selectedJob) return;
+        setIsVerifying(true);
+        try {
+            await jobAPI.verifyJob(selectedJob.id, verifyAction, verifyNote || undefined);
+            if (verifyAction === 'approve') {
+                toast.success('✅ Job verified and marked as completed! Invoice auto-generated.');
+                setSelectedJob({ ...selectedJob, status: 'completed' });
+            } else {
+                toast.success('↩ Job rejected and sent back to In Progress.');
+                setSelectedJob({ ...selectedJob, status: 'in_progress' });
+            }
+            setIsVerifyModalOpen(false);
+            setVerifyNote('');
+            fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Action failed');
+        } finally {
+            setIsVerifying(false);
         }
     };
 
@@ -111,7 +156,6 @@ export default function Jobs() {
             toast.success('Note added');
             setNoteDescription('');
             
-            // Refresh selected job
             const { data } = await jobAPI.getById(selectedJob.id);
             setSelectedJob(data);
         } catch (error) {
@@ -141,6 +185,9 @@ export default function Jobs() {
             toast.error('Failed to load job details');
         }
     };
+
+    const isPendingVerification = selectedJob?.status === 'done_pending_verification';
+    const isActiveJob = selectedJob && ['pending', 'assigned', 'in_progress', 'waiting_parts'].includes(selectedJob.status);
 
     return (
         <div className="page-container fade-in">
@@ -203,13 +250,14 @@ export default function Jobs() {
                                     <tr><td colSpan="7" className="text-center p-xl">No jobs found.</td></tr>
                                 ) : (
                                     jobs.map((job) => (
-                                        <tr key={job.id}>
+                                        <tr key={job.id} className={job.status === 'done_pending_verification' ? 'row-highlight-verify' : ''}>
                                             <td className="font-semibold">#{job.id}</td>
                                             <td>{job.customer_name}</td>
                                             <td className="font-semibold text-primary">{job.device_name}</td>
                                             <td>{job.technician_name || <span className="text-muted">Unassigned</span>}</td>
                                             <td>
                                                 <span className={`badge ${STATUS_COLORS[job.status]}`}>
+                                                    {job.status === 'done_pending_verification' && '⏳ '}
                                                     {STATUS_LABELS[job.status]}
                                                 </span>
                                             </td>
@@ -218,6 +266,9 @@ export default function Jobs() {
                                                 <button className="btn btn-sm btn-secondary" onClick={() => openViewModal(job.id)}>
                                                     View Details
                                                 </button>
+                                                {isAdmin && job.status === 'done_pending_verification' && (
+                                                    <span className="badge badge-pending-verify ml-sm" style={{ fontSize: '10px' }}>Needs Review</span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -277,7 +328,13 @@ export default function Jobs() {
                         {/* LEFT COLUMN: Details & Notes */}
                         <div>
                             <div className="card p-md mb-md" style={{ background: 'var(--bg-tertiary)' }}>
-                                <h3 className="font-semibold text-primary mb-sm">{selectedJob.device_name}</h3>
+                                <div className="flex justify-between items-start mb-sm">
+                                    <h3 className="font-semibold text-primary">{selectedJob.device_name}</h3>
+                                    <span className={`badge ${STATUS_COLORS[selectedJob.status]}`}>
+                                        {selectedJob.status === 'done_pending_verification' && '⏳ '}
+                                        {STATUS_LABELS[selectedJob.status]}
+                                    </span>
+                                </div>
                                 <p className="text-muted mb-sm">{selectedJob.problem_description}</p>
                                 
                                 <div className="grid grid-2 gap-md mt-md">
@@ -329,21 +386,81 @@ export default function Jobs() {
 
                         {/* RIGHT COLUMN: Actions & Status */}
                         <div>
-                            <div className="card p-md mb-md" style={{ background: 'var(--bg-tertiary)' }}>
-                                <h4 className="font-semibold mb-md">Update Status</h4>
-                                <div className="flex flex-col gap-sm">
-                                    {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                                        <button 
-                                            key={val}
-                                            className={`btn ${selectedJob.status === val ? 'btn-primary' : 'btn-secondary'} w-full text-left`}
-                                            onClick={() => handleStatusChange(selectedJob.id, val)}
-                                        >
-                                            {selectedJob.status === val && <HiCheckCircle className="mr-sm" />}
-                                            {label}
-                                        </button>
-                                    ))}
+
+                            {/* ===== ADMIN: PENDING VERIFICATION BANNER ===== */}
+                            {isAdmin && isPendingVerification && (
+                                <div className="verify-banner mb-md">
+                                    <div className="verify-banner-icon">
+                                        <HiClipboardCheck />
+                                    </div>
+                                    <div className="verify-banner-content">
+                                        <div className="font-semibold mb-xs">Job Marked as Done</div>
+                                        <p className="text-sm m-0 mb-md">The technician has completed this job. Please review and take action.</p>
+                                        <div className="flex gap-sm flex-col">
+                                            <button
+                                                id="verify-approve-btn"
+                                                className="btn btn-verify-approve w-full"
+                                                onClick={() => openVerifyModal('approve')}
+                                            >
+                                                <HiBadgeCheck className="mr-sm" /> Verify & Finish Job
+                                            </button>
+                                            <button
+                                                id="verify-reject-btn"
+                                                className="btn btn-verify-reject w-full"
+                                                onClick={() => openVerifyModal('reject')}
+                                            >
+                                                <HiXCircle className="mr-sm" /> Reject — Send Back
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {/* ===== EMPLOYEE: MARK AS DONE BUTTON ===== */}
+                            {!isAdmin && isActiveJob && (
+                                <div className="mark-done-card mb-md">
+                                    <HiClipboardCheck className="mark-done-icon" />
+                                    <div className="font-semibold mb-xs">Finished the repair?</div>
+                                    <p className="text-sm text-muted m-0 mb-md">Mark this job as done and it will be sent to the admin for verification.</p>
+                                    <button
+                                        id="mark-done-btn"
+                                        className="btn btn-mark-done w-full"
+                                        onClick={handleMarkDone}
+                                    >
+                                        <HiCheckCircle className="mr-sm" /> Mark as Done
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* ===== EMPLOYEE: PENDING STATE INFO ===== */}
+                            {!isAdmin && isPendingVerification && (
+                                <div className="pending-info-card mb-md">
+                                    <div className="text-center">
+                                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
+                                        <div className="font-semibold mb-xs">Waiting for Admin</div>
+                                        <p className="text-sm text-muted m-0">Your completion request has been submitted. The admin will review and verify this job.</p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ===== ADMIN: FULL STATUS PICKER (for non-pending-verify states) ===== */}
+                            {isAdmin && !isPendingVerification && (
+                                <div className="card p-md mb-md" style={{ background: 'var(--bg-tertiary)' }}>
+                                    <h4 className="font-semibold mb-md">Update Status</h4>
+                                    <div className="flex flex-col gap-sm">
+                                        {Object.entries(STATUS_LABELS).filter(([val]) => val !== 'done_pending_verification').map(([val, label]) => (
+                                            <button 
+                                                key={val}
+                                                className={`btn ${selectedJob.status === val ? 'btn-primary' : 'btn-secondary'} w-full text-left`}
+                                                onClick={() => handleStatusChange(selectedJob.id, val)}
+                                            >
+                                                {selectedJob.status === val && <HiCheckCircle className="mr-sm" />}
+                                                {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                             
                             {isAdmin && (
                                 <button className="btn btn-danger w-full mt-auto" onClick={() => handleDeleteJob(selectedJob.id)}>
@@ -355,6 +472,57 @@ export default function Jobs() {
                     </div>
                 </Modal>
             )}
+
+            {/* VERIFY JOB MODAL */}
+            <Modal
+                isOpen={isVerifyModalOpen}
+                onClose={() => setIsVerifyModalOpen(false)}
+                title={verifyAction === 'approve' ? '✅ Verify & Complete Job' : '↩ Reject Job'}
+            >
+                <div>
+                    {verifyAction === 'approve' ? (
+                        <div className="verify-modal-info verify-approve-info mb-md">
+                            <HiBadgeCheck className="verify-modal-icon" />
+                            <div>
+                                <div className="font-semibold mb-xs">Approve this job completion</div>
+                                <p className="text-sm m-0">This will mark the job as <strong>Completed</strong> and automatically generate an invoice.</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="verify-modal-info verify-reject-info mb-md">
+                            <HiXCircle className="verify-modal-icon" />
+                            <div>
+                                <div className="font-semibold mb-xs">Reject this completion</div>
+                                <p className="text-sm m-0">This will send the job back to <strong>In Progress</strong> for further work.</p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="form-group">
+                        <label className="form-label">{verifyAction === 'approve' ? 'Approval Note (optional)' : 'Rejection Reason (optional)'}</label>
+                        <textarea
+                            className="form-input"
+                            rows="3"
+                            placeholder={verifyAction === 'approve' ? 'e.g. Quality checked, all parts installed correctly.' : 'e.g. Screen replacement not aligned properly.'}
+                            value={verifyNote}
+                            onChange={(e) => setVerifyNote(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="flex gap-md mt-md">
+                        <button className="btn btn-secondary flex-1" onClick={() => setIsVerifyModalOpen(false)} disabled={isVerifying}>
+                            Cancel
+                        </button>
+                        <button
+                            className={`btn flex-1 ${verifyAction === 'approve' ? 'btn-verify-approve' : 'btn-verify-reject'}`}
+                            onClick={handleVerifyJob}
+                            disabled={isVerifying}
+                        >
+                            {isVerifying ? 'Processing...' : verifyAction === 'approve' ? '✅ Confirm & Complete' : '↩ Confirm Rejection'}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

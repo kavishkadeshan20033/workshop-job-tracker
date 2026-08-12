@@ -69,6 +69,8 @@ export const jobAPI = {
     create: (data) => api.post('/jobs', data),
     update: (id, data) => api.put(`/jobs/${id}`, data),
     updateStatus: (id, status) => api.patch(`/jobs/${id}/status`, { status }),
+    markDone: (id) => api.patch(`/jobs/${id}/status`, { status: 'done_pending_verification' }),
+    verifyJob: (id, action, note) => api.patch(`/jobs/${id}/verify`, { action, note }),
     delete: (id) => api.delete(`/jobs/${id}`),
     getStats: () => api.get('/jobs/stats'),
     

@@ -40,7 +40,20 @@ CREATE TABLE IF NOT EXISTS technicians (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- 4. Workshop Jobs
+-- 4. Devices (moved before jobs so FK works)
+CREATE TABLE IF NOT EXISTS devices (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id INT NOT NULL,
+    brand VARCHAR(100) NOT NULL,
+    model VARCHAR(100) NOT NULL,
+    year SMALLINT,
+    serial_number VARCHAR(50),
+    device_type VARCHAR(50),
+    created_at DATETIME NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
+);
+
+-- 5. Workshop Jobs
 CREATE TABLE IF NOT EXISTS jobs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
@@ -63,7 +76,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
--- 5. Spare Parts
+-- 6. Spare Parts
 CREATE TABLE IF NOT EXISTS parts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -77,7 +90,7 @@ CREATE TABLE IF NOT EXISTS parts (
     updated_at DATETIME NOT NULL DEFAULT NOW() ON UPDATE NOW()
 );
 
--- 6. Job Parts
+-- 7. Job Parts
 CREATE TABLE IF NOT EXISTS job_parts (
     id INT AUTO_INCREMENT PRIMARY KEY,
     job_id INT NOT NULL,
@@ -89,7 +102,7 @@ CREATE TABLE IF NOT EXISTS job_parts (
     FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE RESTRICT
 );
 
--- 7. Job Notes
+-- 8. Job Notes
 CREATE TABLE IF NOT EXISTS job_notes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     job_id INT NOT NULL,
@@ -100,7 +113,7 @@ CREATE TABLE IF NOT EXISTS job_notes (
     FOREIGN KEY (employee_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- 8. Invoices
+-- 9. Invoices
 CREATE TABLE IF NOT EXISTS invoices (
     id INT AUTO_INCREMENT PRIMARY KEY,
     job_id INT NOT NULL UNIQUE,
@@ -116,7 +129,7 @@ CREATE TABLE IF NOT EXISTS invoices (
     FOREIGN KEY (job_id) REFERENCES jobs(id) ON DELETE CASCADE
 );
 
--- 9. Audit Log
+-- 10. Audit Log
 CREATE TABLE IF NOT EXISTS audit_log (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT,
@@ -129,28 +142,42 @@ CREATE TABLE IF NOT EXISTS audit_log (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- 10. Devices
-CREATE TABLE IF NOT EXISTS devices (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    brand VARCHAR(100) NOT NULL,
-    model VARCHAR(100) NOT NULL,
-    year SMALLINT,
-    serial_number VARCHAR(50),
-    device_type VARCHAR(50),
-    created_at DATETIME NOT NULL DEFAULT NOW(),
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
-);
-
--- Indexes
+-- Indexes (using IF NOT EXISTS pattern via DROP + CREATE to avoid duplicates)
+DROP INDEX IF EXISTS idx_devices_customer ON devices;
 CREATE INDEX idx_devices_customer ON devices(customer_id);
+
+DROP INDEX IF EXISTS idx_jobs_customer ON jobs;
 CREATE INDEX idx_jobs_customer ON jobs(customer_id);
+
+DROP INDEX IF EXISTS idx_jobs_device ON jobs;
 CREATE INDEX idx_jobs_device ON jobs(device_id);
+
+DROP INDEX IF EXISTS idx_jobs_technician ON jobs;
 CREATE INDEX idx_jobs_technician ON jobs(technician_id);
+
+DROP INDEX IF EXISTS idx_jobs_status ON jobs;
 CREATE INDEX idx_jobs_status ON jobs(status);
+
+DROP INDEX IF EXISTS idx_job_parts_job ON job_parts;
 CREATE INDEX idx_job_parts_job ON job_parts(job_id);
+
+DROP INDEX IF EXISTS idx_job_notes_job ON job_notes;
 CREATE INDEX idx_job_notes_job ON job_notes(job_id);
+
+DROP INDEX IF EXISTS idx_invoices_job ON invoices;
 CREATE INDEX idx_invoices_job ON invoices(job_id);
+
+DROP INDEX IF EXISTS idx_audit_log_user ON audit_log;
 CREATE INDEX idx_audit_log_user ON audit_log(user_id);
+
+-- Seed default admin user (password: admin123)
+INSERT IGNORE INTO users (username, email, password_hash, full_name, role)
+VALUES (
+    'admin',
+    'admin@workshop.com',
+    '$2a$10$bOHBjqJEixwefD5WJNj/MeENVmnxjYJYD7IP/ETkAcCch.1LWeWw6',
+    'System Admin',
+    'admin'
+);
 
 SET FOREIGN_KEY_CHECKS = 1;

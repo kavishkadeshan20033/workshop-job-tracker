@@ -23,8 +23,14 @@ router.delete('/:id', authorize('admin'), jobController.delete);
 
 // Status updates (both admin and employee)
 router.patch('/:id/status', [
-    body('status').isIn(['pending', 'assigned', 'in_progress', 'waiting_parts', 'completed', 'delivered'])
+    body('status').isIn(['pending', 'assigned', 'in_progress', 'waiting_parts', 'done_pending_verification', 'completed', 'delivered'])
 ], validate, jobController.updateStatus);
+
+// Admin-only: Verify (approve/reject) a job marked as done
+router.patch('/:id/verify', authorize('admin'), [
+    body('action').isIn(['approve', 'reject']),
+    body('note').optional().isString()
+], validate, jobController.verifyJob);
 
 // Notes (both admin and employee)
 router.post('/:id/notes', [

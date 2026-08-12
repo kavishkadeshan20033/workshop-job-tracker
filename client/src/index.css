@@ -684,6 +684,139 @@ select.form-input {
 .badge-warning { background-color: var(--warning-light); color: var(--warning-text); }
 .badge-danger  { background-color: var(--danger-light);  color: var(--danger-text);  }
 .badge-info    { background-color: var(--info-light);    color: var(--info-text);    }
+.badge-pending-verify { background-color: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+
+/* =============================================
+   JOB VERIFICATION FEATURE STYLES
+   ============================================= */
+
+/* Highlight row for done_pending_verification */
+.row-highlight-verify {
+  background-color: #fffbeb !important;
+}
+.row-highlight-verify:hover {
+  background-color: #fef3c7 !important;
+}
+
+/* Employee: Mark as Done card */
+.mark-done-card {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 2px solid #16a34a;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.mark-done-icon {
+  font-size: 2.5rem;
+  color: #16a34a;
+  margin-bottom: var(--spacing-sm);
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn-mark-done {
+  background-color: #16a34a;
+  color: white;
+  border-color: #16a34a;
+  border-radius: var(--radius-md);
+}
+
+.btn-mark-done:hover:not(:disabled) {
+  background-color: #15803d;
+  border-color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+/* Employee: Pending info card */
+.pending-info-card {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 2px solid #f59e0b;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+}
+
+/* Admin: Verification banner */
+.verify-banner {
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 2px solid #f59e0b;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.verify-banner-icon {
+  font-size: 2rem;
+  color: #d97706;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.verify-banner-content {
+  flex: 1;
+}
+
+.btn-verify-approve {
+  background-color: #16a34a;
+  color: white;
+  border-color: #16a34a;
+  border-radius: var(--radius-md);
+}
+
+.btn-verify-approve:hover:not(:disabled) {
+  background-color: #15803d;
+  border-color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
+}
+
+.btn-verify-reject {
+  background-color: transparent;
+  color: #dc2626;
+  border: 2px solid #dc2626;
+  border-radius: var(--radius-md);
+}
+
+.btn-verify-reject:hover:not(:disabled) {
+  background-color: #dc2626;
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* Verify modal info banners */
+.verify-modal-info {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+}
+
+.verify-modal-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.verify-approve-info {
+  background-color: #f0fdf4;
+  border-color: #16a34a;
+  color: #15803d;
+}
+
+.verify-reject-info {
+  background-color: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.ml-sm { margin-left: var(--spacing-sm); }
 
 /* =============================================
    MODALS — Clean white overlays

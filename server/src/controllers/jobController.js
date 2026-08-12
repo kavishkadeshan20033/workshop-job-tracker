@@ -51,6 +51,11 @@ const jobController = {
         try {
             const existing = await JobModel.findById(req.params.id);
             if (!existing) return res.status(404).json({ error: 'Job not found' });
+
+            // Employees can only mark a job as done_pending_verification, not directly complete it
+            if (req.user.role === 'employee' && req.body.status === 'completed') {
+                return res.status(403).json({ error: 'Employees cannot directly complete a job. Use "Mark as Done" instead.' });
+            }
             
             const job = await JobModel.update(req.params.id, { status: req.body.status });
             
@@ -74,6 +79,57 @@ const jobController = {
 
             await AuditModel.log({ user_id: req.user.id, action: 'STATUS_CHANGE', entity: 'jobs', entity_id: job.id, details: `Status: ${req.body.status}`, ip_address: req.ip });
             res.json(job);
+        } catch (error) { next(error); }
+    },
+
+    async verifyJob(req, res, next) {
+        try {
+            const existing = await JobModel.findById(req.params.id);
+            if (!existing) return res.status(404).json({ error: 'Job not found' });
+
+            if (existing.status !== 'done_pending_verification') {
+                return res.status(400).json({ error: 'Job is not pending verification.' });
+            }
+
+            const { action, note } = req.body;
+
+            if (action === 'approve') {
+                const job = await JobModel.update(req.params.id, { status: 'completed' });
+
+                // Auto-generate invoice if not already exists
+                const InvoiceModel = require('../models/Invoice');
+                const existingInvoice = await InvoiceModel.findByJobId(job.id);
+                if (!existingInvoice) {
+                    const db = require('../config/db');
+                    const partsRow = await db.queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [job.id]);
+                    const partsTotal = partsRow?.total || 0;
+                    const laborTotal = Math.max(0, (job.estimated_cost || 0) - partsTotal);
+
+                    await InvoiceModel.create({
+                        job_id: job.id,
+                        labor_total: laborTotal,
+                        tax_rate: 0.10,
+                        notes: 'Auto-generated invoice after admin verification.'
+                    });
+                }
+
+                if (note) {
+                    await JobNoteModel.create({ job_id: job.id, employee_id: req.user.id, description: `✅ Admin verified: ${note}` });
+                }
+
+                await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_APPROVE', entity: 'jobs', entity_id: job.id, details: 'Job approved and completed', ip_address: req.ip });
+                return res.json(job);
+
+            } else if (action === 'reject') {
+                const job = await JobModel.update(req.params.id, { status: 'in_progress' });
+
+                if (note) {
+                    await JobNoteModel.create({ job_id: job.id, employee_id: req.user.id, description: `↩ Admin rejected: ${note}` });
+                }
+
+                await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_REJECT', entity: 'jobs', entity_id: job.id, details: `Job rejected: ${note || 'No reason provided'}`, ip_address: req.ip });
+                return res.json(job);
+            }
         } catch (error) { next(error); }
     },
 

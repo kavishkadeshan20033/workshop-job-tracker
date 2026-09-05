@@ -1,7 +1,14 @@
 const JobModel = require('../models/Job');
 const JobNoteModel = require('../models/JobNote');
 const AuditModel = require('../models/Audit');
-const { sendJobAssignedEmail, sendJobCreatedCustomerEmail } = require('../utils/email');
+const { 
+    sendJobAssignedEmail, 
+    sendJobCreatedCustomerEmail,
+    sendJobVerifiedTechnicianEmail,
+    sendJobCompletedCustomerEmail,
+    sendJobRejectedTechnicianEmail,
+    sendJobPendingVerificationAdminEmail
+} = require('../utils/email');
 const logger = require('../middleware/logger');
 
 async function resolveTechnicianEmail(fullJob) {
@@ -158,6 +165,24 @@ const jobController = {
                 }
             }
 
+            // If technician marked as done_pending_verification, notify admin via email
+            if (req.body.status === 'done_pending_verification') {
+                try {
+                    const fullJob = await JobModel.findById(job.id);
+                    const adminEmail = process.env.SMTP_USER;
+                    if (adminEmail) {
+                        await sendJobPendingVerificationAdminEmail({
+                            to: adminEmail,
+                            adminName: 'Admin',
+                            job: fullJob,
+                            technicianName: fullJob?.technician_name || req.user.full_name || req.user.username
+                        });
+                    }
+                } catch (emailErr) {
+                    logger.error(`Error sending pending verification notice for Job #${job.id}: ${emailErr.message}`);
+                }
+            }
+
             await AuditModel.log({ user_id: req.user.id, action: 'STATUS_CHANGE', entity: 'jobs', entity_id: job.id, details: `Status: ${req.body.status}`, ip_address: req.ip });
             res.json(job);
         } catch (error) { next(error); }
@@ -167,10 +192,6 @@ const jobController = {
         try {
             const existing = await JobModel.findById(req.params.id);
             if (!existing) return res.status(404).json({ error: 'Job not found' });
-
-            if (existing.status !== 'done_pending_verification') {
-                return res.status(400).json({ error: 'Job is not pending verification.' });
-            }
 
             const { action, note } = req.body;
 
@@ -199,6 +220,44 @@ const jobController = {
                 }
 
                 await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_APPROVE', entity: 'jobs', entity_id: job.id, details: 'Job approved and completed', ip_address: req.ip });
+
+                // Dispatch approval notifications (awaited for serverless runtime)
+                try {
+                    const fullJob = await JobModel.findById(job.id);
+                    const techEmail = await resolveTechnicianEmail(fullJob);
+                    const emailPromises = [];
+
+                    if (techEmail) {
+                        logger.info(`Sending job approval email to technician ${fullJob?.technician_name} (${techEmail}) for Job #${job.id}`);
+                        emailPromises.push(
+                            sendJobVerifiedTechnicianEmail({
+                                to: techEmail,
+                                technicianName: fullJob?.technician_name || 'Technician',
+                                job: fullJob,
+                                adminName: req.user.full_name || req.user.username || 'Admin',
+                                note: note || ''
+                            })
+                        );
+                    }
+
+                    if (fullJob?.customer_email) {
+                        logger.info(`Sending job completed email to customer ${fullJob.customer_name} (${fullJob.customer_email}) for Job #${job.id}`);
+                        emailPromises.push(
+                            sendJobCompletedCustomerEmail({
+                                to: fullJob.customer_email,
+                                customerName: fullJob.customer_name || 'Valued Customer',
+                                job: fullJob
+                            })
+                        );
+                    }
+
+                    if (emailPromises.length > 0) {
+                        await Promise.allSettled(emailPromises);
+                    }
+                } catch (emailErr) {
+                    logger.error(`Error sending verification approval emails for Job #${job.id}: ${emailErr.message}`);
+                }
+
                 return res.json(job);
 
             } else if (action === 'reject') {
@@ -209,6 +268,26 @@ const jobController = {
                 }
 
                 await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_REJECT', entity: 'jobs', entity_id: job.id, details: `Job rejected: ${note || 'No reason provided'}`, ip_address: req.ip });
+
+                // Dispatch rejection email to technician (awaited for serverless runtime)
+                try {
+                    const fullJob = await JobModel.findById(job.id);
+                    const techEmail = await resolveTechnicianEmail(fullJob);
+
+                    if (techEmail) {
+                        logger.info(`Sending rejection notice to technician ${fullJob?.technician_name} (${techEmail}) for Job #${job.id}`);
+                        await sendJobRejectedTechnicianEmail({
+                            to: techEmail,
+                            technicianName: fullJob?.technician_name || 'Technician',
+                            job: fullJob,
+                            adminName: req.user.full_name || req.user.username || 'Admin',
+                            note: note || 'Please review the device and resolve issues before re-submitting.'
+                        });
+                    }
+                } catch (emailErr) {
+                    logger.error(`Error sending rejection notice email for Job #${job.id}: ${emailErr.message}`);
+                }
+
                 return res.json(job);
             }
         } catch (error) { next(error); }

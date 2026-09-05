@@ -5,7 +5,7 @@ git status
 git add .
 
 # 3. Commit the changes
-git commit -m "Fix job assignment email dispatch: await serverless promise, technician selector in details modal, and dynamic job updates"
+git commit -m "Fix job verification: add done_pending_verification to MySQL enum, enable admin verify/reject, and send verification/rejection emails"
 
 # 4. Push to your main GitHub branch
 git push origin main

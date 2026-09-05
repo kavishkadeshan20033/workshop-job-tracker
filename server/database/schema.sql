@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_by INTEGER NOT NULL,
     device_name TEXT NOT NULL,
     problem_description TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'assigned', 'in_progress', 'waiting_parts', 'completed', 'delivered')),
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'assigned', 'in_progress', 'waiting_parts', 'done_pending_verification', 'completed', 'delivered')),
     priority TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
     date_in TEXT NOT NULL DEFAULT (datetime('now')),
     date_out TEXT,

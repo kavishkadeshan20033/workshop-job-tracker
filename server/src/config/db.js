@@ -26,6 +26,13 @@ async function initializeDatabase() {
         const conn = await pool.getConnection();
         logger.info('✅ MySQL connected successfully.');
 
+        // Ensure jobs table status column includes 'done_pending_verification'
+        try {
+            await conn.execute("ALTER TABLE jobs MODIFY COLUMN status ENUM('pending','assigned','in_progress','waiting_parts','done_pending_verification','completed','delivered') NOT NULL DEFAULT 'pending'");
+        } catch (e) {
+            // Ignore if already altered or lacking alter permissions
+        }
+
         // Check if users table has any rows (tables must already exist via mysql_schema.sql)
         const [rows] = await conn.execute("SELECT COUNT(*) as count FROM users");
         const count = rows[0].count;

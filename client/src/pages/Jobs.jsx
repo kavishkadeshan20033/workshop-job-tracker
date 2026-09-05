@@ -162,10 +162,10 @@ export default function Jobs() {
         try {
             await jobAPI.verifyJob(selectedJob.id, verifyAction, verifyNote || undefined);
             if (verifyAction === 'approve') {
-                toast.success('✅ Job verified and marked as completed! Invoice auto-generated.');
+                toast.success('✅ Job verified & completed! Notification emails sent.');
                 setSelectedJob({ ...selectedJob, status: 'completed' });
             } else {
-                toast.success('↩ Job rejected and sent back to In Progress.');
+                toast.success('↩ Job sent back to In Progress! Notification email sent to technician.');
                 setSelectedJob({ ...selectedJob, status: 'in_progress' });
             }
             setIsVerifyModalOpen(false);
@@ -217,7 +217,8 @@ export default function Jobs() {
         }
     };
 
-    const isPendingVerification = selectedJob?.status === 'done_pending_verification';
+    const isPendingVerification = selectedJob?.status === 'done_pending_verification' || selectedJob?.status === '';
+    const isCompleted = selectedJob?.status === 'completed' || selectedJob?.status === 'delivered';
     const isActiveJob = selectedJob && ['pending', 'assigned', 'in_progress', 'waiting_parts'].includes(selectedJob.status);
 
     return (
@@ -436,7 +437,7 @@ export default function Jobs() {
 
                             {/* ===== ADMIN: VERIFICATION SECTION (always visible) ===== */}
                             {isAdmin && (
-                                <div className={`verify-banner mb-md ${isPendingVerification ? 'verify-banner-active' : 'verify-banner-inactive'}`}>
+                                <div className={`verify-banner mb-md ${isPendingVerification ? 'verify-banner-active' : isCompleted ? 'verify-banner-inactive' : ''}`}>
                                     <div className="verify-banner-icon">
                                         <HiClipboardCheck />
                                     </div>
@@ -446,28 +447,33 @@ export default function Jobs() {
                                                 <div className="font-semibold mb-xs" style={{ color: '#92400e' }}>⏳ Job Marked as Done — Needs Review</div>
                                                 <p className="text-sm m-0 mb-md" style={{ color: '#78350f' }}>The technician has completed this job. Please review and take action.</p>
                                             </>
+                                        ) : isCompleted ? (
+                                            <>
+                                                <div className="font-semibold mb-xs" style={{ color: '#065f46' }}>✅ Job Verified &amp; Completed</div>
+                                                <p className="text-sm m-0 mb-md" style={{ color: '#047857' }}>This repair has already been verified and closed.</p>
+                                            </>
                                         ) : (
                                             <>
-                                                <div className="font-semibold mb-xs text-muted">Job Verification</div>
-                                                <p className="text-sm m-0 mb-md text-muted">These actions become available once the technician marks the job as done.</p>
+                                                <div className="font-semibold mb-xs" style={{ color: 'var(--text-primary)' }}>Job Verification &amp; Completion</div>
+                                                <p className="text-sm m-0 mb-md text-muted">You can verify &amp; finish this job, or reject and send it back for further work.</p>
                                             </>
                                         )}
                                         <div className="flex gap-sm flex-col">
                                             <button
                                                 id="verify-approve-btn"
                                                 className="btn btn-verify-approve w-full"
-                                                disabled={!isPendingVerification}
+                                                disabled={isCompleted}
                                                 onClick={() => openVerifyModal('approve')}
-                                                title={!isPendingVerification ? 'Job must be marked as done first' : ''}
+                                                title={isCompleted ? 'Job is already completed' : ''}
                                             >
                                                 <HiBadgeCheck className="mr-sm" /> Verify &amp; Finish Job
                                             </button>
                                             <button
                                                 id="verify-reject-btn"
                                                 className="btn btn-verify-reject w-full"
-                                                disabled={!isPendingVerification}
+                                                disabled={isCompleted}
                                                 onClick={() => openVerifyModal('reject')}
-                                                title={!isPendingVerification ? 'Job must be marked as done first' : ''}
+                                                title={isCompleted ? 'Job is already completed' : ''}
                                             >
                                                 <HiXCircle className="mr-sm" /> Reject — Send Back
                                             </button>

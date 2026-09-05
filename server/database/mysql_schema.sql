@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_by INT NOT NULL,
     device_name VARCHAR(255) NOT NULL,
     problem_description TEXT NOT NULL,
-    status ENUM('pending', 'assigned', 'in_progress', 'waiting_parts', 'completed', 'delivered') NOT NULL DEFAULT 'pending',
+    status ENUM('pending', 'assigned', 'in_progress', 'waiting_parts', 'done_pending_verification', 'completed', 'delivered') NOT NULL DEFAULT 'pending',
     priority ENUM('low', 'medium', 'high', 'urgent') NOT NULL DEFAULT 'medium',
     date_in DATETIME NOT NULL DEFAULT NOW(),
     date_out DATETIME,

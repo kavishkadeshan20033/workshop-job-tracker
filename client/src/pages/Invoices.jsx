@@ -146,314 +146,118 @@ export default function Invoices() {
         }
 
         const invoiceNum = `INV-${String(fullInv.id).padStart(4, '0')}`;
-        const issueDate = new Date(fullInv.issued_at || Date.now()).toLocaleDateString('en-US', {
-            month: 'short',
-            day: '2-digit',
-            year: 'numeric'
-        });
-
-        let partsRowsHtml = '';
-        if (fullInv.parts && fullInv.parts.length > 0) {
-            partsRowsHtml = fullInv.parts.map((p, idx) => `
-                <tr>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: center; font-size: 12px;">${idx + 2}</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; font-size: 12px;">
-                        <div style="font-weight: 700; color: #000;">${p.name}</div>
-                        ${p.category ? `<div style="font-size: 10px; color: #555;">Category: ${p.category}</div>` : ''}
-                    </td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: center; font-size: 11px; color: #333;">${p.part_number || '8471.3010'}</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: center; font-size: 12px;">${p.quantity_used}</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: right; font-size: 12px;">${Number(p.unit_price_at_time).toFixed(2)}</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: right; font-size: 12px; font-weight: 700;">${Number(p.line_total || (p.quantity_used * p.unit_price_at_time)).toFixed(2)}</td>
-                </tr>
-            `).join('');
-        } else if (Number(fullInv.parts_total || 0) > 0) {
-            partsRowsHtml = `
-                <tr>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: center; font-size: 12px;">2</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; font-size: 12px;">
-                        <div style="font-weight: 700; color: #000;">Replacement Hardware &amp; Components</div>
-                    </td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: center; font-size: 11px; color: #333;">8471.3010</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: center; font-size: 12px;">1</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: right; font-size: 12px;">${Number(fullInv.parts_total).toFixed(2)}</td>
-                    <td style="padding: 7px 8px; border: 1px solid #000; text-align: right; font-size: 12px; font-weight: 700;">${Number(fullInv.parts_total).toFixed(2)}</td>
-                </tr>
-            `;
-        }
-
-        const subtotalVal = (Number(fullInv.labor_total || 0) + Number(fullInv.parts_total || 0)).toFixed(2);
-        const taxVal = Number(fullInv.tax_amount || 0).toFixed(2);
-        const totalVal = Number(fullInv.total_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const taxPct = (Number(fullInv.tax_rate || 0.10) * 100).toFixed(0);
+        const issueDate = new Date(fullInv.issued_at || Date.now()).toLocaleDateString();
 
         const html = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>${invoiceNum} - TAX INVOICE</title>
+                <title>${invoiceNum} - KavishkaLK Laptop Care</title>
                 <style>
-                    * { box-sizing: border-box; }
-                    body {
-                        font-family: Arial, Helvetica, sans-serif;
-                        color: #000;
-                        background: #fff;
-                        margin: 0;
-                        padding: 30px 40px;
-                        font-size: 13px;
-                        line-height: 1.4;
-                    }
-                    .header {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: flex-start;
-                        margin-bottom: 15px;
-                    }
-                    .logo-box {
-                        background: #333333;
-                        color: #ffffff;
-                        padding: 14px 22px;
-                        border-radius: 4px;
-                        display: inline-block;
-                        text-align: center;
-                    }
-                    .logo-title {
-                        font-size: 26px;
-                        font-weight: 900;
-                        letter-spacing: 2px;
-                        line-height: 1;
-                        font-family: 'Arial Black', Impact, sans-serif;
-                    }
-                    .logo-sub {
-                        font-size: 14px;
-                        font-weight: 600;
-                        letter-spacing: 1px;
-                        margin-top: 4px;
-                    }
-                    .store-info {
-                        text-align: right;
-                        font-size: 11px;
-                        line-height: 1.35;
-                        color: #222;
-                        max-width: 320px;
-                    }
-                    .store-title {
-                        font-weight: 700;
-                        font-size: 12px;
-                    }
-                    .tax-invoice-heading {
-                        text-align: center;
-                        font-size: 14px;
-                        font-weight: 800;
-                        letter-spacing: 1.5px;
-                        border-top: 1px solid #555;
-                        border-bottom: 1px solid #555;
-                        padding: 4px 0;
-                        margin: 15px 0 20px 0;
-                    }
-                    .meta-grid {
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 20px;
-                    }
-                    .bill-to {
-                        font-size: 12px;
-                        line-height: 1.45;
-                        width: 50%;
-                    }
-                    .bill-title {
-                        font-weight: 700;
-                        font-size: 13px;
-                        margin-bottom: 2px;
-                    }
-                    .inv-meta {
-                        text-align: right;
-                        font-size: 12px;
-                        line-height: 1.5;
-                        width: 45%;
-                    }
-                    .inv-meta-row {
-                        display: flex;
-                        justify-content: flex-end;
-                        gap: 20px;
-                    }
-                    .inv-meta-label {
-                        font-weight: 700;
-                    }
-                    .supply-place {
-                        font-size: 11px;
-                        color: #333;
-                        margin-top: 10px;
-                    }
-                    table.invoice-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        border: 1px solid #000;
-                        margin-bottom: 10px;
-                    }
-                    table.invoice-table th {
-                        background: #000;
-                        color: #fff;
-                        padding: 7px 8px;
-                        font-size: 11px;
-                        font-weight: 700;
-                        text-transform: uppercase;
-                        border: 1px solid #000;
-                    }
-                    table.invoice-table td {
-                        padding: 7px 8px;
-                        border: 1px solid #000;
-                        font-size: 12px;
-                    }
-                    .declaration {
-                        font-size: 10.5px;
-                        color: #222;
-                        margin: 8px 0 16px 0;
-                    }
-                    .totals-container {
-                        display: flex;
-                        justify-content: flex-end;
-                        margin-bottom: 25px;
-                    }
-                    .totals-table {
-                        width: 320px;
-                        font-size: 13px;
-                    }
-                    .totals-row {
-                        display: flex;
-                        justify-content: space-between;
-                        padding: 4px 0;
-                    }
-                    .total-line {
-                        border-top: 1px solid #000;
-                        margin-top: 4px;
-                    }
-                    .final-total-row {
-                        display: flex;
-                        justify-content: space-between;
-                        font-size: 16px;
-                        font-weight: 900;
-                        padding: 8px 0;
-                        border-bottom: 3px double #000;
-                    }
-                    .computer-generated {
-                        text-align: center;
-                        font-size: 11px;
-                        color: #555;
-                        margin-top: 50px;
-                        padding-top: 15px;
-                        border-top: 1px solid #ccc;
-                    }
+                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; }
+                    .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 24px; }
+                    .title { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0; }
+                    .sub { font-size: 13px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 2px; }
+                    .address-line { font-size: 12px; color: #64748b; margin-top: 5px; }
+                    .inv-badge { font-size: 20px; font-weight: 800; color: #0284c7; }
+                    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px; }
+                    .box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; font-size: 14px; }
+                    .box-title { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 8px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+                    th { text-align: left; padding: 12px; background: #f1f5f9; font-size: 12px; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; }
+                    td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+                    .total-section { margin-left: auto; width: 320px; text-align: right; }
+                    .total-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+                    .total-final { display: flex; justify-content: space-between; padding: 12px 0; font-size: 20px; font-weight: 800; border-top: 2px solid #0f172a; margin-top: 8px; }
+                    .status-pill { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+                    .paid { background: #dcfce7; color: #15803d; }
+                    .unpaid { background: #fee2e2; color: #dc2626; }
+                    .footer { text-align: center; margin-top: 50px; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
                     @media print {
-                        body { padding: 15px 20px; }
+                        body { padding: 20px 30px; }
                     }
                 </style>
             </head>
             <body>
                 <div class="header">
-                    <div class="logo-box">
-                        <div class="logo-title">ASUS</div>
-                        <div class="logo-sub">Exclusive Store</div>
+                    <div>
+                        <div class="title">KavishkaLK Laptop Care</div>
+                        <div class="sub">Laptop Repair &amp; Service Management</div>
+                        <div class="address-line">Kaluwella waththa, Thalaramba, Kamburugamuwa, Sri Lanka</div>
                     </div>
-                    <div class="store-info">
-                        <div class="store-title">KavishkaLK Exclusive Store — Laptop Care Hub</div>
-                        <div>Shop No 9, Ground Floor, High Level Road,</div>
-                        <div>Boralesgamuwa, Colombo,</div>
-                        <div>Western Province, Sri Lanka</div>
-                        <div>GSTIN / VAT: 27AAUPM1756H1ZT / LK-88902</div>
+                    <div style="text-align: right;">
+                        <div class="inv-badge">${invoiceNum}</div>
+                        <div style="font-size: 13px; color: #64748b; margin-top: 4px;">Date: ${issueDate}</div>
                     </div>
                 </div>
 
-                <div class="tax-invoice-heading">TAX INVOICE</div>
-
-                <div class="meta-grid">
-                    <div class="bill-to">
-                        <div class="bill-title">Bill To:</div>
-                        <div style="font-weight: 700; font-size: 14px;">${fullInv.customer_name || 'Valued Customer'}</div>
-                        ${fullInv.customer_address ? `<div>${fullInv.customer_address}</div>` : ''}
-                        ${fullInv.customer_phone ? `<div>Phone: ${fullInv.customer_phone}</div>` : ''}
-                        ${fullInv.customer_email ? `<div>Email: ${fullInv.customer_email}</div>` : ''}
-                        <div>Sri Lanka</div>
-                        <div class="supply-place">Place of Supply: Western Province, Sri Lanka</div>
+                <div class="grid">
+                    <div class="box">
+                        <div class="box-title">Billed To (Customer)</div>
+                        <div style="font-weight: 700; font-size: 16px;">${fullInv.customer_name || 'Valued Customer'}</div>
+                        <div>Phone: ${fullInv.customer_phone || '—'}</div>
+                        <div>Email: ${fullInv.customer_email || '—'}</div>
+                        ${fullInv.customer_address ? `<div>Address: ${fullInv.customer_address}</div>` : ''}
                     </div>
-
-                    <div class="inv-meta">
-                        <div class="inv-meta-row">
-                            <span class="inv-meta-label">Invoice#:</span>
-                            <span style="font-weight: 800; font-family: monospace;">${invoiceNum}</span>
-                        </div>
-                        <div class="inv-meta-row">
-                            <span class="inv-meta-label">Invoice Date:</span>
-                            <span>${issueDate}</span>
-                        </div>
-                        <div class="inv-meta-row">
-                            <span class="inv-meta-label">Job Reference:</span>
-                            <span style="font-weight: 700;">#${fullInv.job_id}</span>
-                        </div>
-                        <div class="inv-meta-row">
-                            <span class="inv-meta-label">Device:</span>
-                            <span>${fullInv.device_name || 'Laptop'}</span>
-                        </div>
-                        <div class="inv-meta-row" style="margin-top: 6px;">
-                            <span class="inv-meta-label">Status:</span>
-                            <span style="font-weight: 700; text-transform: uppercase;">${(fullInv.payment_status || 'unpaid').toUpperCase()}</span>
-                        </div>
+                    <div class="box">
+                        <div class="box-title">Device &amp; Job Info</div>
+                        <div style="font-weight: 700; font-size: 16px;">${fullInv.device_name || 'Laptop'}</div>
+                        <div>Job Reference: #${fullInv.job_id}</div>
+                        <div>Service: ${fullInv.job_description || 'General Laptop Service'}</div>
                     </div>
                 </div>
 
-                <table class="invoice-table">
+                <table>
                     <thead>
                         <tr>
-                            <th style="width: 35px; text-align: center;">#</th>
-                            <th style="text-align: left;">Item Description</th>
-                            <th style="width: 100px; text-align: center;">HSN/SAC</th>
-                            <th style="width: 45px; text-align: center;">Qty</th>
-                            <th style="width: 90px; text-align: right;">Rate (Rs.)</th>
-                            <th style="width: 100px; text-align: right;">Amount (Rs.)</th>
+                            <th>Item &amp; Service Description</th>
+                            <th style="text-align: right;">Cost (Rs.)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td style="text-align: center;">1</td>
                             <td>
-                                <div style="font-weight: 700;">Laptop Diagnostics, Board Repair &amp; Service Charge</div>
-                                <div style="font-size: 11px; color: #444;">${fullInv.job_description || 'General Laptop Service &amp; Diagnostics'}</div>
+                                <div style="font-weight: 600;">Laptop Diagnostics &amp; Labor Charge</div>
+                                ${fullInv.job_description ? `<div style="font-size: 12px; color: #64748b;">${fullInv.job_description}</div>` : ''}
                             </td>
-                            <td style="text-align: center; color: #444;">8471.3010</td>
-                            <td style="text-align: center;">1</td>
-                            <td style="text-align: right;">${Number(fullInv.labor_total || 0).toFixed(2)}</td>
-                            <td style="text-align: right; font-weight: 700;">${Number(fullInv.labor_total || 0).toFixed(2)}</td>
+                            <td style="text-align: right; font-weight: 600;">Rs. ${Number(fullInv.labor_total || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                         </tr>
-                        ${partsRowsHtml}
+                        ${fullInv.parts && fullInv.parts.length > 0 ? fullInv.parts.map(p => `
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">${p.name}</div>
+                                <div style="font-size: 12px; color: #64748b;">${p.quantity_used}x @ Rs. ${Number(p.unit_price_at_time).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${p.part_number ? ` &bull; Part #${p.part_number}` : ''}</div>
+                            </td>
+                            <td style="text-align: right; font-weight: 600;">Rs. ${Number(p.line_total || (p.quantity_used * p.unit_price_at_time)).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
+                        `).join('') : (Number(fullInv.parts_total || 0) > 0 ? `
+                        <tr>
+                            <td>
+                                <div style="font-weight: 600;">Replacement Hardware &amp; Components</div>
+                            </td>
+                            <td style="text-align: right; font-weight: 600;">Rs. ${Number(fullInv.parts_total).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                        </tr>
+                        ` : '')}
                     </tbody>
                 </table>
 
-                <div class="declaration">
-                    We declare that this invoice shows the actual price of the goods and services described and that all particulars are true and correct.
-                </div>
-
-                <div class="totals-container">
-                    <div class="totals-table">
-                        <div class="totals-row">
-                            <span style="font-weight: 700;">Sub Total</span>
-                            <span style="font-weight: 700;">${subtotalVal}</span>
-                        </div>
-                        <div class="totals-row">
-                            <span>Sales Tax (${taxPct}%)</span>
-                            <span>${taxVal}</span>
-                        </div>
-                        <div class="total-line"></div>
-                        <div class="final-total-row">
-                            <span>TOTAL</span>
-                            <span>Rs. ${totalVal}</span>
-                        </div>
+                <div class="total-section">
+                    <div class="total-row"><span>Labor Subtotal:</span><span>Rs. ${Number(fullInv.labor_total || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                    ${Number(fullInv.parts_total || 0) > 0 ? `<div class="total-row"><span>Parts Subtotal:</span><span>Rs. ${Number(fullInv.parts_total).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>` : ''}
+                    <div class="total-row"><span>Sales Tax (${(Number(fullInv.tax_rate || 0.10) * 100).toFixed(0)}%):</span><span>Rs. ${Number(fullInv.tax_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></div>
+                    <div class="total-final">
+                        <span>Total Due:</span>
+                        <span>Rs. ${Number(fullInv.total_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        Status: <span class="status-pill ${fullInv.payment_status === 'paid' ? 'paid' : 'unpaid'}">${(fullInv.payment_status || 'unpaid').toUpperCase()}</span>
                     </div>
                 </div>
 
-                <div class="computer-generated">
-                    This is a computer generated invoice no signature required. Correction or modification is not allowed.
+                <div class="footer">
+                    <div>Thank you for choosing KavishkaLK Laptop Care! For warranty support or inquiries, please contact our service desk.</div>
+                    <div style="margin-top: 4px; font-weight: 600;">Kaluwella waththa, Thalaramba, Kamburugamuwa &bull; Sri Lanka</div>
                 </div>
-
                 <script>window.print();</script>
             </body>
             </html>

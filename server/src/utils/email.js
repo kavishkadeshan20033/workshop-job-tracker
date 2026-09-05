@@ -916,7 +916,7 @@ async function sendCustomerInvoiceEmail({ to, customerName, invoice, job }) {
           </p>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; All Rights Reserved
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; Kaluwella waththa, Thalaramba, Kamburugamuwa &bull; Sri Lanka
         </div>
       </div>
     </body>

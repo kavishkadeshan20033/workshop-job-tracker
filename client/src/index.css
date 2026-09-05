@@ -1090,6 +1090,77 @@ select.form-input {
   font-size: 0.875rem;
   font-weight: 500;
   margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-sm);
+}
+
+.forgot-password-link {
+  background: none;
+  border: none;
+  color: var(--accent-red);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s ease, text-decoration 0.2s ease;
+  font-family: inherit;
+}
+
+.forgot-password-link:hover {
+  opacity: 0.85;
+  text-decoration: underline;
+}
+
+.login-back-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: var(--spacing-lg);
+  transition: color 0.2s ease;
+  font-family: inherit;
+}
+
+.login-back-btn:hover {
+  color: var(--text-dark);
+}
+
+.login-badge-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(42, 111, 219, 0.08);
+  border: 1px solid rgba(42, 111, 219, 0.2);
+  color: var(--accent-blue);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-md);
+}
+
+.login-notice-warning {
+  background: rgba(235, 140, 30, 0.1);
+  border: 1px solid rgba(235, 140, 30, 0.3);
+  color: #b45309;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.825rem;
+  margin-bottom: var(--spacing-md);
+  line-height: 1.45;
+}
+
+.code-input-field {
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 6px !important;
+  text-align: center;
 }
 
 /* =============================================

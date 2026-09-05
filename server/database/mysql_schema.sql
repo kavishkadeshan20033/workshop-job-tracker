@@ -140,9 +140,24 @@ CREATE TABLE IF NOT EXISTS audit_log (
     ip_address VARCHAR(50),
     created_at DATETIME NOT NULL DEFAULT NOW(),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+-- 11. Password Resets
+CREATE TABLE IF NOT EXISTS password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used TINYINT(1) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Indexes (using IF NOT EXISTS pattern via DROP + CREATE to avoid duplicates)
+DROP INDEX IF EXISTS idx_password_resets_user ON password_resets;
+CREATE INDEX idx_password_resets_user ON password_resets(user_id);
+
+DROP INDEX IF EXISTS idx_password_resets_code ON password_resets;
+CREATE INDEX idx_password_resets_code ON password_resets(code);
 DROP INDEX IF EXISTS idx_devices_customer ON devices;
 CREATE INDEX idx_devices_customer ON devices(customer_id);
 

@@ -84,6 +84,60 @@ router.post('/login', [
 
 /**
  * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset code
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [identifier]
+ *             properties:
+ *               identifier: { type: string, description: "Username or email" }
+ *     responses:
+ *       200:
+ *         description: Verification code sent
+ */
+router.post('/forgot-password', [
+    body('identifier').trim().notEmpty().withMessage('Username or email is required'),
+    validate,
+], authController.forgotPassword);
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset password using verification code
+ *     tags: [Auth]
+ *     security: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [identifier, code, newPassword]
+ *             properties:
+ *               identifier: { type: string }
+ *               code: { type: string }
+ *               newPassword: { type: string, minLength: 6 }
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ */
+router.post('/reset-password', [
+    body('identifier').trim().notEmpty().withMessage('Username or email is required'),
+    body('code').trim().notEmpty().withMessage('Verification code is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+    validate,
+], authController.resetPassword);
+
+/**
+ * @swagger
  * /api/auth/profile:
  *   get:
  *     summary: Get current user profile

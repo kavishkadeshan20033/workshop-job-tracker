@@ -29,21 +29,27 @@ const InvoiceModel = {
         return queryOne('SELECT * FROM invoices WHERE job_id = ?', [jobId]);
     },
 
-    async create({ job_id, labor_total = 0, tax_rate = 0.10, notes }) {
+    async create({ job_id, labor_total = 0, parts_total, tax_rate = 0.10, notes }) {
         const existing = await this.findByJobId(job_id);
         if (existing) {
-            return this.update(existing.id, { labor_total, tax_rate, notes });
+            return this.update(existing.id, { labor_total, parts_total, tax_rate, notes });
         }
 
-        const partsRow = await queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [job_id]);
-        const partsTotal = partsRow?.total || 0;
-        const subtotal = parseFloat(labor_total) + parseFloat(partsTotal);
-        const taxAmount = subtotal * parseFloat(tax_rate);
+        let finalParts = parts_total !== undefined && parts_total !== null ? parseFloat(parts_total) : null;
+        if (finalParts === null) {
+            const partsRow = await queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [job_id]);
+            finalParts = parseFloat(partsRow?.total || 0);
+        }
+
+        const finalLabor = parseFloat(labor_total || 0);
+        const finalTaxRate = parseFloat(tax_rate !== undefined && tax_rate !== null ? tax_rate : 0.10);
+        const subtotal = finalLabor + finalParts;
+        const taxAmount = subtotal * finalTaxRate;
         const totalAmount = subtotal + taxAmount;
 
         const result = await runQuery(
             'INSERT INTO invoices (job_id, labor_total, parts_total, tax_rate, tax_amount, total_amount, notes) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [job_id, labor_total, partsTotal, tax_rate, taxAmount, totalAmount, notes || null]
+            [job_id, finalLabor, finalParts, finalTaxRate, taxAmount, totalAmount, notes || null]
         );
         return this.findById(result.lastInsertRowid);
     },

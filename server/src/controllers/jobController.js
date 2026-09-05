@@ -220,6 +220,7 @@ const jobController = {
                 if (existingInvoice) {
                     await InvoiceModel.update(existingInvoice.id, {
                         labor_total: finalLabor,
+                        parts_total: partsTotal,
                         tax_rate: finalTaxRate,
                         notes: note ? `Admin verified: ${note}` : existingInvoice.notes
                     });
@@ -227,6 +228,7 @@ const jobController = {
                     await InvoiceModel.create({
                         job_id: job.id,
                         labor_total: finalLabor,
+                        parts_total: partsTotal,
                         tax_rate: finalTaxRate,
                         notes: note ? `Admin verified: ${note}` : 'Invoice generated upon admin verification.'
                     });
@@ -341,15 +343,104 @@ const jobController = {
 
     async addPart(req, res, next) {
         try {
-            await JobModel.addPart(req.params.id, req.body.part_id, req.body.quantity_used, req.body.unit_price_at_time);
-            res.status(201).json({ message: 'Part added' });
+            const jobId = req.params.id;
+            const existing = await JobModel.findById(jobId);
+            if (!existing) return res.status(404).json({ error: 'Job not found' });
+
+            const PartModel = require('../models/Part');
+            const part = await PartModel.findById(req.body.part_id);
+            if (!part) return res.status(404).json({ error: 'Part not found in catalog' });
+
+            const quantity = parseInt(req.body.quantity_used || 1, 10);
+            if (isNaN(quantity) || quantity <= 0) {
+                return res.status(400).json({ error: 'Quantity must be at least 1' });
+            }
+
+            const unitPrice = (req.body.unit_price_at_time !== undefined && req.body.unit_price_at_time !== null && req.body.unit_price_at_time !== '')
+                ? parseFloat(req.body.unit_price_at_time)
+                : parseFloat(part.unit_price || 0);
+
+            // Add part record to job_parts
+            await JobModel.addPart(jobId, part.id, quantity, unitPrice);
+
+            // Deduct stock in parts catalog
+            const db = require('../config/db');
+            await db.runQuery('UPDATE parts SET stock_qty = GREATEST(0, stock_qty - ?) WHERE id = ?', [quantity, part.id]);
+
+            // If an invoice exists for this job, recalculate its totals
+            const InvoiceModel = require('../models/Invoice');
+            const existingInvoice = await InvoiceModel.findByJobId(jobId);
+            if (existingInvoice) {
+                await InvoiceModel.update(existingInvoice.id);
+            }
+
+            // If job already has final_cost or is completed, recalculate final_cost
+            if (existing.status === 'completed' || existing.final_cost) {
+                const partsRow = await db.queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [jobId]);
+                const partsTotal = parseFloat(partsRow?.total || 0);
+                const laborTotal = existingInvoice ? parseFloat(existingInvoice.labor_total || 0) : Math.max(0, (existing.estimated_cost || 0));
+                const taxRate = existingInvoice ? parseFloat(existingInvoice.tax_rate || 0.10) : 0.10;
+                const newFinalCost = (laborTotal + partsTotal) * (1 + taxRate);
+                await JobModel.update(jobId, { final_cost: newFinalCost });
+            }
+
+            await AuditModel.log({ 
+                user_id: req.user.id, 
+                action: 'ADD_PART', 
+                entity: 'jobs', 
+                entity_id: parseInt(jobId), 
+                details: `Added ${quantity}x ${part.name} ($${unitPrice.toFixed(2)}/unit)`, 
+                ip_address: req.ip 
+            });
+
+            const updatedParts = await JobModel.getParts(jobId);
+            res.status(201).json({ message: 'Part added successfully', parts: updatedParts });
         } catch (error) { next(error); }
     },
 
     async deletePart(req, res, next) {
         try {
-            await JobModel.removePart(req.params.partId);
-            res.json({ message: 'Part removed from job' });
+            const jobId = req.params.id;
+            const jobPartId = req.params.partId;
+            const db = require('../config/db');
+
+            const jobPart = await db.queryOne('SELECT * FROM job_parts WHERE id = ? AND job_id = ?', [jobPartId, jobId]);
+            if (!jobPart) return res.status(404).json({ error: 'Job part not found' });
+
+            // Restore stock in parts catalog
+            await db.runQuery('UPDATE parts SET stock_qty = stock_qty + ? WHERE id = ?', [jobPart.quantity_used, jobPart.part_id]);
+
+            // Remove from job_parts
+            await JobModel.removePart(jobPartId);
+
+            // If an invoice exists for this job, recalculate its totals
+            const InvoiceModel = require('../models/Invoice');
+            const existingInvoice = await InvoiceModel.findByJobId(jobId);
+            if (existingInvoice) {
+                await InvoiceModel.update(existingInvoice.id);
+            }
+
+            const existing = await JobModel.findById(jobId);
+            if (existing && (existing.status === 'completed' || existing.final_cost)) {
+                const partsRow = await db.queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [jobId]);
+                const partsTotal = parseFloat(partsRow?.total || 0);
+                const laborTotal = existingInvoice ? parseFloat(existingInvoice.labor_total || 0) : Math.max(0, (existing.estimated_cost || 0));
+                const taxRate = existingInvoice ? parseFloat(existingInvoice.tax_rate || 0.10) : 0.10;
+                const newFinalCost = (laborTotal + partsTotal) * (1 + taxRate);
+                await JobModel.update(jobId, { final_cost: newFinalCost });
+            }
+
+            await AuditModel.log({ 
+                user_id: req.user.id, 
+                action: 'DELETE_PART', 
+                entity: 'jobs', 
+                entity_id: parseInt(jobId), 
+                details: `Removed part ID #${jobPart.part_id} from job`, 
+                ip_address: req.ip 
+            });
+
+            const updatedParts = await JobModel.getParts(jobId);
+            res.json({ message: 'Part removed from job', parts: updatedParts });
         } catch (error) { next(error); }
     },
 

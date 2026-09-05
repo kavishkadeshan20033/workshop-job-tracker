@@ -46,6 +46,7 @@ export default function Invoices() {
             device_name: inv.device_name,
             customer_name: inv.customer_name,
             labor_total: String(inv.labor_total || 0),
+            parts_total: String(inv.parts_total || 0),
             tax_rate: String(inv.tax_rate !== undefined ? inv.tax_rate : 0.10),
             payment_status: inv.payment_status || 'unpaid',
             notes: inv.notes || ''
@@ -86,6 +87,7 @@ export default function Invoices() {
         try {
             await invoiceAPI.update(editForm.id, {
                 labor_total: parseFloat(editForm.labor_total) || 0,
+                parts_total: parseFloat(editForm.parts_total) || 0,
                 tax_rate: parseFloat(editForm.tax_rate) || 0.10,
                 payment_status: editForm.payment_status,
                 notes: editForm.notes
@@ -388,9 +390,9 @@ export default function Invoices() {
                         <div className="font-bold text-sm">{editForm.customer_name} &bull; {editForm.device_name} (Job #{editForm.job_id})</div>
                     </div>
 
-                    <div className="grid grid-2 gap-md">
+                    <div className="grid grid-3 gap-md">
                         <div className="form-group">
-                            <label className="form-label">Service / Labor Fee ($)</label>
+                            <label className="form-label">Service Fee ($)</label>
                             <input 
                                 className="form-input font-semibold" 
                                 type="number" 
@@ -401,7 +403,17 @@ export default function Invoices() {
                             />
                         </div>
                         <div className="form-group">
-                            <label className="form-label">Tax Rate (e.g. 0.10 = 10%)</label>
+                            <label className="form-label">Parts Total ($)</label>
+                            <input 
+                                className="form-input font-semibold" 
+                                type="number" 
+                                step="0.01" 
+                                value={editForm.parts_total} 
+                                onChange={(e) => setEditForm({ ...editForm, parts_total: e.target.value })} 
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">Tax Rate</label>
                             <input 
                                 className="form-input" 
                                 type="number" 
@@ -410,6 +422,14 @@ export default function Invoices() {
                                 onChange={(e) => setEditForm({ ...editForm, tax_rate: e.target.value })} 
                             />
                         </div>
+                    </div>
+
+                    {/* Live Total Display */}
+                    <div className="p-sm mb-md flex justify-between items-center" style={{ background: '#f8fafc', borderRadius: '6px', border: '1px solid #e2e8f0', fontSize: '0.88rem' }}>
+                        <span className="text-muted">Calculated Total:</span>
+                        <span className="font-bold text-success text-base">
+                            ${(((parseFloat(editForm.labor_total) || 0) + (parseFloat(editForm.parts_total) || 0)) * (1 + (parseFloat(editForm.tax_rate) || 0))).toFixed(2)}
+                        </span>
                     </div>
 
                     <div className="form-group">

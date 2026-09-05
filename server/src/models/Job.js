@@ -94,10 +94,12 @@ const JobModel = {
 
     async getParts(jobId) {
         return queryAll(`
-            SELECT jp.*, p.name, p.part_number 
+            SELECT jp.*, p.name, p.part_number, p.category, p.unit_price as catalog_unit_price,
+                   ROUND(jp.quantity_used * jp.unit_price_at_time, 2) as line_total
             FROM job_parts jp
             JOIN parts p ON jp.part_id = p.id
             WHERE jp.job_id = ?
+            ORDER BY jp.created_at ASC
         `, [jobId]);
     },
     

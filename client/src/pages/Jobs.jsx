@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { jobAPI, customerAPI, technicianAPI, deviceAPI } from '../services/api';
+import { jobAPI, customerAPI, technicianAPI, deviceAPI, partAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle, HiBadgeCheck, HiXCircle, HiClipboardCheck, HiClock, HiUser, HiPhone } from 'react-icons/hi';
+import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle, HiBadgeCheck, HiXCircle, HiClipboardCheck, HiClock, HiUser, HiPhone, HiCube } from 'react-icons/hi';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
@@ -63,19 +63,28 @@ export default function Jobs() {
     const [selectedJob, setSelectedJob] = useState(null);
     const [noteDescription, setNoteDescription] = useState('');
 
+    // Parts Inventory for Job Assignment
+    const [partsCatalog, setPartsCatalog] = useState([]);
+    const [selectedPartId, setSelectedPartId] = useState('');
+    const [partQty, setPartQty] = useState(1);
+    const [partPrice, setPartPrice] = useState('');
+    const [isAddingPart, setIsAddingPart] = useState(false);
+
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [jobsRes, custRes, techRes, devRes] = await Promise.all([
+            const [jobsRes, custRes, techRes, devRes, partsRes] = await Promise.all([
                 jobAPI.getAll({ search, status: statusFilter }),
                 customerAPI.getAll(),
                 technicianAPI.getAll(),
-                deviceAPI.getAll()
+                deviceAPI.getAll(),
+                partAPI.getAll()
             ]);
             setJobs(jobsRes.data);
             setCustomers(custRes.data);
             setTechnicians(techRes.data);
             setDevices(devRes.data || []);
+            setPartsCatalog(partsRes.data || []);
         } catch (error) {
             toast.error('Failed to load data');
         } finally {
@@ -155,7 +164,13 @@ export default function Jobs() {
     const openVerifyModal = (action) => {
         setVerifyAction(action);
         setVerifyNote('');
-        setVerifyPrice(selectedJob?.estimated_cost ? String(selectedJob.estimated_cost) : '');
+        const pCost = (selectedJob?.parts || []).reduce((sum, p) => {
+            const qty = parseFloat(p.quantity_used || 1);
+            const unitP = parseFloat(p.unit_price_at_time !== undefined ? p.unit_price_at_time : (p.unit_price || 0));
+            return sum + (qty * unitP);
+        }, 0);
+        const defaultServiceCharge = selectedJob?.estimated_cost ? Math.max(0, parseFloat(selectedJob.estimated_cost) - pCost) : 0;
+        setVerifyPrice(defaultServiceCharge > 0 ? String(defaultServiceCharge.toFixed(2)) : '');
         setVerifyTaxRate('0.10');
         setIsVerifyModalOpen(true);
     };
@@ -171,19 +186,69 @@ export default function Jobs() {
 
             await jobAPI.verifyJob(selectedJob.id, verifyAction, verifyNote || undefined, extra);
             if (verifyAction === 'approve') {
-                toast.success('✅ Job verified & completed! Invoice generated with pricing.');
-                setSelectedJob({ ...selectedJob, status: 'completed' });
+                toast.success('✅ Job verified & completed! Parts cost & service charge added to invoice.');
             } else {
                 toast.success('↩ Job sent back to In Progress! Notification email sent.');
-                setSelectedJob({ ...selectedJob, status: 'in_progress' });
             }
             setIsVerifyModalOpen(false);
             setVerifyNote('');
+
+            // Reload updated job details & list
+            const { data: updatedData } = await jobAPI.getById(selectedJob.id);
+            setSelectedJob(updatedData);
             fetchData();
         } catch (error) {
             toast.error(error.response?.data?.error || 'Action failed');
         } finally {
             setIsVerifying(false);
+        }
+    };
+
+    const handleAddPartToJob = async (e) => {
+        e.preventDefault();
+        if (!selectedPartId) {
+            toast.error('Please select a spare part');
+            return;
+        }
+        try {
+            setIsAddingPart(true);
+            await jobAPI.addPart(selectedJob.id, {
+                part_id: parseInt(selectedPartId, 10),
+                quantity_used: parseInt(partQty || 1, 10),
+                unit_price_at_time: partPrice !== '' ? parseFloat(partPrice) : undefined
+            });
+            toast.success('Part attached to repair job');
+            setSelectedPartId('');
+            setPartQty(1);
+            setPartPrice('');
+
+            // Reload full job details & parts
+            const { data } = await jobAPI.getById(selectedJob.id);
+            setSelectedJob(data);
+
+            // Reload catalog for updated stock levels
+            const partsRes = await partAPI.getAll();
+            setPartsCatalog(partsRes.data || []);
+            fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to add part');
+        } finally {
+            setIsAddingPart(false);
+        }
+    };
+
+    const handleDeleteJobPart = async (jobPartId) => {
+        if (!window.confirm('Remove this replacement part from the job?')) return;
+        try {
+            await jobAPI.deletePart(selectedJob.id, jobPartId);
+            toast.success('Part removed from job');
+            const { data } = await jobAPI.getById(selectedJob.id);
+            setSelectedJob(data);
+            const partsRes = await partAPI.getAll();
+            setPartsCatalog(partsRes.data || []);
+            fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to remove part');
         }
     };
 
@@ -229,6 +294,12 @@ export default function Jobs() {
     const isPendingVerification = selectedJob?.status === 'done_pending_verification' || selectedJob?.status === '';
     const isCompleted = selectedJob?.status === 'completed' || selectedJob?.status === 'delivered';
     const isActiveJob = selectedJob && ['pending', 'assigned', 'in_progress', 'waiting_parts'].includes(selectedJob.status);
+
+    const partsTotalCost = (selectedJob?.parts || []).reduce((sum, p) => {
+        const qty = parseFloat(p.quantity_used || 1);
+        const unitP = parseFloat(p.unit_price_at_time !== undefined ? p.unit_price_at_time : (p.unit_price || 0));
+        return sum + (qty * unitP);
+    }, 0);
 
     return (
         <div className="page-container fade-in">
@@ -451,6 +522,133 @@ export default function Jobs() {
                                 </div>
                             </div>
 
+                            {/* Parts & Hardware Used Section */}
+                            <div className="card p-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)' }}>
+                                <div className="flex justify-between items-center mb-sm">
+                                    <h4 className="font-bold text-sm flex items-center gap-xs m-0">
+                                        <HiCube className="text-primary" /> Spare Parts &amp; Hardware Used
+                                    </h4>
+                                    <span className="badge badge-success" style={{ fontSize: '11px', padding: '3px 8px', fontWeight: 700 }}>
+                                        Parts Total: ${partsTotalCost.toFixed(2)}
+                                    </span>
+                                </div>
+
+                                {/* Parts List */}
+                                {selectedJob.parts && selectedJob.parts.length > 0 ? (
+                                    <div className="flex flex-col gap-xs mb-md" style={{ maxHeight: '180px', overflowY: 'auto' }}>
+                                        {selectedJob.parts.map(p => {
+                                            const lineTotal = Number(p.line_total !== undefined ? p.line_total : (p.quantity_used * p.unit_price_at_time)).toFixed(2);
+                                            return (
+                                                <div key={p.id} className="flex justify-between items-center p-sm" style={{
+                                                    background: 'var(--white)',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid var(--border-light)',
+                                                    fontSize: '0.85rem'
+                                                }}>
+                                                    <div style={{ minWidth: 0 }}>
+                                                        <div className="font-semibold text-sm truncate">{p.name}</div>
+                                                        <div className="text-xs text-muted flex items-center gap-xs mt-xs">
+                                                            {p.part_number && <span className="badge badge-secondary" style={{ fontSize: '10px', padding: '1px 5px' }}>{p.part_number}</span>}
+                                                            {p.category && <span className="text-muted">&bull; {p.category}</span>}
+                                                            <span>&bull; {p.quantity_used}x @ ${Number(p.unit_price_at_time).toFixed(2)}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-sm flex-shrink-0">
+                                                        <span className="font-bold text-sm text-primary">${lineTotal}</span>
+                                                        {!isCompleted && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteJobPart(p.id)}
+                                                                title="Remove part"
+                                                                style={{
+                                                                    background: 'transparent',
+                                                                    border: 'none',
+                                                                    color: 'var(--accent-red)',
+                                                                    cursor: 'pointer',
+                                                                    padding: '4px',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    borderRadius: '4px'
+                                                                }}
+                                                            >
+                                                                <HiTrash />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-md mb-sm" style={{ background: 'var(--white)', borderRadius: '8px', border: '1px dashed var(--border-medium)' }}>
+                                        <p className="text-muted text-xs m-0 italic">No replacement parts attached yet.</p>
+                                    </div>
+                                )}
+
+                                {/* Add Part Form (Available when repair is active) */}
+                                {!isCompleted && (
+                                    <form onSubmit={handleAddPartToJob} style={{ borderTop: '1px solid var(--border-light)', paddingTop: '10px' }}>
+                                        <div className="text-xs font-bold uppercase tracking-wider text-muted mb-xs flex items-center gap-xs">
+                                            <HiPlus /> Add Part to Repair
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 0.8fr) minmax(0, 1fr) auto', gap: '6px', alignItems: 'center' }}>
+                                            <select
+                                                className="form-input"
+                                                style={{ height: '34px', fontSize: '0.82rem', padding: '4px 8px' }}
+                                                value={selectedPartId}
+                                                onChange={(e) => {
+                                                    const pid = e.target.value;
+                                                    setSelectedPartId(pid);
+                                                    const found = partsCatalog.find(p => String(p.id) === String(pid));
+                                                    if (found) {
+                                                        setPartPrice(found.unit_price ? String(found.unit_price) : '');
+                                                    }
+                                                }}
+                                            >
+                                                <option value="">-- Select Spare Part --</option>
+                                                {partsCatalog.map(p => (
+                                                    <option key={p.id} value={p.id} disabled={p.stock_qty <= 0}>
+                                                        {p.name} ({p.stock_qty > 0 ? `In Stock: ${p.stock_qty}` : 'Out of stock'} &bull; ${Number(p.unit_price).toFixed(2)})
+                                                    </option>
+                                                ))}
+                                            </select>
+
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                className="form-input"
+                                                placeholder="Qty"
+                                                title="Quantity used"
+                                                style={{ height: '34px', fontSize: '0.82rem', padding: '4px 6px', textAlign: 'center' }}
+                                                value={partQty}
+                                                onChange={(e) => setPartQty(e.target.value)}
+                                            />
+
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                className="form-input"
+                                                placeholder="Price $"
+                                                title="Unit Price ($)"
+                                                style={{ height: '34px', fontSize: '0.82rem', padding: '4px 6px' }}
+                                                value={partPrice}
+                                                onChange={(e) => setPartPrice(e.target.value)}
+                                            />
+
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary btn-sm"
+                                                style={{ height: '34px', padding: '0 12px', whiteSpace: 'nowrap' }}
+                                                disabled={isAddingPart || !selectedPartId}
+                                            >
+                                                {isAddingPart ? 'Adding...' : '+ Add'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+                            </div>
+
                             {/* Job Notes Section */}
                             <div className="card p-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)' }}>
                                 <div className="flex justify-between items-center mb-sm">
@@ -671,34 +869,67 @@ export default function Jobs() {
                     )}
 
                     {verifyAction === 'approve' && (
-                        <div className="grid grid-2 gap-md mb-md">
-                            <div className="form-group mb-0">
-                                <label className="form-label text-xs">Full Service / Repair Fee ($) *</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01" 
-                                    className="form-input" 
-                                    placeholder="0.00" 
-                                    value={verifyPrice} 
-                                    onChange={(e) => setVerifyPrice(e.target.value)} 
-                                />
-                                <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
-                                    Labor / service charge billed on invoice.
-                                </small>
+                        <div>
+                            {/* Live Invoice Price Calculation Preview */}
+                            <div className="card p-md mb-md" style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+                                <div className="text-xs font-bold uppercase tracking-wider text-muted mb-sm">
+                                    Final Invoice Breakdown Preview
+                                </div>
+                                <div className="flex justify-between text-sm mb-xs">
+                                    <span className="text-muted">Parts Used ({selectedJob?.parts?.length || 0} items):</span>
+                                    <span className="font-semibold text-primary">${partsTotalCost.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm mb-xs">
+                                    <span className="text-muted">Labor / Service Fee:</span>
+                                    <span className="font-semibold">${(parseFloat(verifyPrice) || 0).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm mb-xs">
+                                    <span className="text-muted">Subtotal:</span>
+                                    <span className="font-semibold">${(partsTotalCost + (parseFloat(verifyPrice) || 0)).toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-sm mb-xs">
+                                    <span className="text-muted">Sales Tax ({((parseFloat(verifyTaxRate) || 0) * 100).toFixed(0)}%):</span>
+                                    <span className="font-semibold">
+                                        ${(((parseFloat(verifyPrice) || 0) + partsTotalCost) * (parseFloat(verifyTaxRate) || 0)).toFixed(2)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between text-base font-bold pt-xs mt-xs" style={{ borderTop: '1px dashed #cbd5e1', color: 'var(--accent-red)' }}>
+                                    <span>Final Invoice Total:</span>
+                                    <span className="text-lg text-success">
+                                        ${(((parseFloat(verifyPrice) || 0) + partsTotalCost) * (1 + (parseFloat(verifyTaxRate) || 0))).toFixed(2)}
+                                    </span>
+                                </div>
                             </div>
-                            <div className="form-group mb-0">
-                                <label className="form-label text-xs">Tax Rate (e.g. 0.10 = 10%)</label>
-                                <input 
-                                    type="number" 
-                                    step="0.01" 
-                                    className="form-input" 
-                                    placeholder="0.10" 
-                                    value={verifyTaxRate} 
-                                    onChange={(e) => setVerifyTaxRate(e.target.value)} 
-                                />
-                                <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
-                                    Standard workshop sales tax.
-                                </small>
+
+                            <div className="grid grid-2 gap-md mb-md">
+                                <div className="form-group mb-0">
+                                    <label className="form-label text-xs">Full Service / Repair Fee ($) *</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        className="form-input" 
+                                        placeholder="0.00" 
+                                        value={verifyPrice} 
+                                        onChange={(e) => setVerifyPrice(e.target.value)} 
+                                    />
+                                    <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
+                                        Labor charge (Parts cost of ${partsTotalCost.toFixed(2)} is added automatically).
+                                    </small>
+                                </div>
+                                <div className="form-group mb-0">
+                                    <label className="form-label text-xs">Tax Rate (e.g. 0.10 = 10%)</label>
+                                    <input 
+                                        type="number" 
+                                        step="0.01" 
+                                        className="form-input" 
+                                        placeholder="0.10" 
+                                        value={verifyTaxRate} 
+                                        onChange={(e) => setVerifyTaxRate(e.target.value)} 
+                                    />
+                                    <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
+                                        Standard workshop sales tax.
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     )}

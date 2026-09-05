@@ -40,11 +40,12 @@ router.post('/:id/notes', [
     body('description').notEmpty()
 ], validate, jobController.addNote);
 
-// Parts (Admin only for modifying job parts)
-router.post('/:id/parts', authorize('admin'), [
+// Parts (both admin and technicians can attach/remove parts used during repair)
+router.post('/:id/parts', [
     body('part_id').isInt(),
-    body('quantity_used').isInt({ min: 1 })
+    body('quantity_used').optional().isInt({ min: 1 }),
+    body('unit_price_at_time').optional().isFloat({ min: 0 })
 ], validate, jobController.addPart);
-router.delete('/:id/parts/:partId', authorize('admin'), jobController.deletePart);
+router.delete('/:id/parts/:partId', jobController.deletePart);
 
 module.exports = router;

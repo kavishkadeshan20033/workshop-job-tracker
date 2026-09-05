@@ -71,7 +71,7 @@ const JobModel = {
     },
 
     async update(id, data) {
-        const allowed = ['device_id', 'technician_id', 'status', 'priority', 'date_out', 'estimated_cost', 'final_cost', 'device_name', 'problem_description'];
+        const allowed = ['customer_id', 'device_id', 'technician_id', 'status', 'priority', 'date_out', 'estimated_cost', 'final_cost', 'device_name', 'problem_description'];
         const fields = [];
         const params = [];
         for (const key of allowed) {

@@ -419,8 +419,8 @@ export default function Jobs() {
                         <textarea name="problem_description" className="form-input" rows="3" required></textarea>
                     </div>
                     <div className="form-group">
-                        <label className="form-label">Estimated Service Cost ($)</label>
-                        <input type="number" step="0.01" name="estimated_cost" className="form-input" placeholder="e.g. 75.00 (Optional initial estimate)" />
+                        <label className="form-label">Estimated Service Cost (Rs.)</label>
+                        <input type="number" step="0.01" name="estimated_cost" className="form-input" placeholder="e.g. 7500.00 (Optional initial estimate)" />
                     </div>
                     <div className="form-group">
                         <label className="form-label">Assign Technician (Optional)</label>
@@ -529,7 +529,7 @@ export default function Jobs() {
                                         <HiCube className="text-primary" /> Spare Parts &amp; Hardware Used
                                     </h4>
                                     <span className="badge badge-success" style={{ fontSize: '11px', padding: '3px 8px', fontWeight: 700 }}>
-                                        Parts Total: ${partsTotalCost.toFixed(2)}
+                                        Parts Total: Rs. {partsTotalCost.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
 
@@ -550,11 +550,11 @@ export default function Jobs() {
                                                         <div className="text-xs text-muted flex items-center gap-xs mt-xs">
                                                             {p.part_number && <span className="badge badge-secondary" style={{ fontSize: '10px', padding: '1px 5px' }}>{p.part_number}</span>}
                                                             {p.category && <span className="text-muted">&bull; {p.category}</span>}
-                                                            <span>&bull; {p.quantity_used}x @ ${Number(p.unit_price_at_time).toFixed(2)}</span>
+                                                            <span>&bull; {p.quantity_used}x @ Rs. {Number(p.unit_price_at_time).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                         </div>
                                                     </div>
                                                     <div className="flex items-center gap-sm flex-shrink-0">
-                                                        <span className="font-bold text-sm text-primary">${lineTotal}</span>
+                                                        <span className="font-bold text-sm text-primary">Rs. {Number(lineTotal).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                                         {!isCompleted && (
                                                             <button
                                                                 type="button"
@@ -608,7 +608,7 @@ export default function Jobs() {
                                                 <option value="">-- Select Spare Part --</option>
                                                 {partsCatalog.map(p => (
                                                     <option key={p.id} value={p.id} disabled={p.stock_qty <= 0}>
-                                                        {p.name} ({p.stock_qty > 0 ? `In Stock: ${p.stock_qty}` : 'Out of stock'} &bull; ${Number(p.unit_price).toFixed(2)})
+                                                        {p.name} ({p.stock_qty > 0 ? `In Stock: ${p.stock_qty}` : 'Out of stock'} &bull; Rs. {Number(p.unit_price).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                                                     </option>
                                                 ))}
                                             </select>
@@ -629,8 +629,8 @@ export default function Jobs() {
                                                 step="0.01"
                                                 min="0"
                                                 className="form-input"
-                                                placeholder="Price $"
-                                                title="Unit Price ($)"
+                                                placeholder="Price (Rs.)"
+                                                title="Unit Price (Rs.)"
                                                 style={{ height: '34px', fontSize: '0.82rem', padding: '4px 6px' }}
                                                 value={partPrice}
                                                 onChange={(e) => setPartPrice(e.target.value)}
@@ -877,33 +877,33 @@ export default function Jobs() {
                                 </div>
                                 <div className="flex justify-between text-sm mb-xs">
                                     <span className="text-muted">Parts Used ({selectedJob?.parts?.length || 0} items):</span>
-                                    <span className="font-semibold text-primary">${partsTotalCost.toFixed(2)}</span>
+                                    <span className="font-semibold text-primary">Rs. {partsTotalCost.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="flex justify-between text-sm mb-xs">
                                     <span className="text-muted">Labor / Service Fee:</span>
-                                    <span className="font-semibold">${(parseFloat(verifyPrice) || 0).toFixed(2)}</span>
+                                    <span className="font-semibold">Rs. {(parseFloat(verifyPrice) || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="flex justify-between text-sm mb-xs">
                                     <span className="text-muted">Subtotal:</span>
-                                    <span className="font-semibold">${(partsTotalCost + (parseFloat(verifyPrice) || 0)).toFixed(2)}</span>
+                                    <span className="font-semibold">Rs. {(partsTotalCost + (parseFloat(verifyPrice) || 0)).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                 </div>
                                 <div className="flex justify-between text-sm mb-xs">
                                     <span className="text-muted">Sales Tax ({((parseFloat(verifyTaxRate) || 0) * 100).toFixed(0)}%):</span>
                                     <span className="font-semibold">
-                                        ${(((parseFloat(verifyPrice) || 0) + partsTotalCost) * (parseFloat(verifyTaxRate) || 0)).toFixed(2)}
+                                        Rs. {(((parseFloat(verifyPrice) || 0) + partsTotalCost) * (parseFloat(verifyTaxRate) || 0)).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-base font-bold pt-xs mt-xs" style={{ borderTop: '1px dashed #cbd5e1', color: 'var(--accent-red)' }}>
                                     <span>Final Invoice Total:</span>
                                     <span className="text-lg text-success">
-                                        ${(((parseFloat(verifyPrice) || 0) + partsTotalCost) * (1 + (parseFloat(verifyTaxRate) || 0))).toFixed(2)}
+                                        Rs. {(((parseFloat(verifyPrice) || 0) + partsTotalCost) * (1 + (parseFloat(verifyTaxRate) || 0))).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             </div>
 
                             <div className="grid grid-2 gap-md mb-md">
                                 <div className="form-group mb-0">
-                                    <label className="form-label text-xs">Full Service / Repair Fee ($) *</label>
+                                    <label className="form-label text-xs">Full Service / Repair Fee (Rs.) *</label>
                                     <input 
                                         type="number" 
                                         step="0.01" 
@@ -913,7 +913,7 @@ export default function Jobs() {
                                         onChange={(e) => setVerifyPrice(e.target.value)} 
                                     />
                                     <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
-                                        Labor charge (Parts cost of ${partsTotalCost.toFixed(2)} is added automatically).
+                                        Labor charge (Parts cost of Rs. {partsTotalCost.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is added automatically).
                                     </small>
                                 </div>
                                 <div className="form-group mb-0">

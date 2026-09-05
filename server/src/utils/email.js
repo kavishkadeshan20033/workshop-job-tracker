@@ -203,7 +203,7 @@ async function sendJobAssignedEmail({ to, technicianName, job, assignedBy }) {
               ${job.estimated_cost ? `
               <tr>
                 <td style="color: #718096; font-weight: 500;">Estimated Cost:</td>
-                <td align="right" style="color: #1a202c; font-weight: 600;">$${job.estimated_cost}</td>
+                <td align="right" style="color: #1a202c; font-weight: 600;">Rs. ${Number(job.estimated_cost).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
               ` : ''}
             </table>
@@ -874,30 +874,35 @@ async function sendCustomerInvoiceEmail({ to, customerName, invoice, job }) {
             <thead>
               <tr>
                 <th>Description</th>
-                <th style="text-align: right;">Amount</th>
+                <th style="text-align: right;">Amount (Rs.)</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Laptop Labor &amp; Service Charge</td>
-                <td style="text-align: right; font-weight: 600;">$${Number(invoice.labor_total || 0).toFixed(2)}</td>
+                <td>Laptop Diagnostic, Labor &amp; Service Charge</td>
+                <td style="text-align: right; font-weight: 600;">Rs. ${Number(invoice.labor_total || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
-              ${Number(invoice.parts_total || 0) > 0 ? `
+              ${invoice.parts && invoice.parts.length > 0 ? invoice.parts.map(p => `
               <tr>
-                <td>Replacement Parts &amp; Hardware</td>
-                <td style="text-align: right; font-weight: 600;">$${Number(invoice.parts_total).toFixed(2)}</td>
+                <td>${p.name} (Qty: ${p.quantity_used}${p.part_number ? ` &bull; Part #${p.part_number}` : ''})</td>
+                <td style="text-align: right; font-weight: 600;">Rs. ${Number(p.line_total || (p.quantity_used * p.unit_price_at_time)).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
-              ` : ''}
+              `).join('') : (Number(invoice.parts_total || 0) > 0 ? `
               <tr>
-                <td style="color: #64748b;">Tax (${(Number(invoice.tax_rate || 0.10) * 100).toFixed(0)}%)</td>
-                <td style="text-align: right; color: #64748b;">$${Number(invoice.tax_amount || 0).toFixed(2)}</td>
+                <td>Replacement Hardware &amp; Spare Parts</td>
+                <td style="text-align: right; font-weight: 600;">Rs. ${Number(invoice.parts_total).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+              ` : '')}
+              <tr>
+                <td style="color: #64748b;">Sales Tax (${(Number(invoice.tax_rate || 0.10) * 100).toFixed(0)}%)</td>
+                <td style="text-align: right; color: #64748b;">Rs. ${Number(invoice.tax_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             </tbody>
           </table>
 
           <div class="total-box">
             <div class="total-label">Total Amount</div>
-            <div class="total-val">$${Number(invoice.total_amount || 0).toFixed(2)}</div>
+            <div class="total-val">Rs. ${Number(invoice.total_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
           </div>
 
           ${invoice.notes ? `
@@ -918,14 +923,14 @@ async function sendCustomerInvoiceEmail({ to, customerName, invoice, job }) {
     </html>
     `;
 
-    const plainText = `Dear ${recipientName},\n\nHere is your repair invoice ${invoiceNumber} for your ${invoice.device_name || 'device'}:\nTotal Amount: $${Number(invoice.total_amount || 0).toFixed(2)}\nPayment Status: ${invoice.payment_status || 'unpaid'}\n\nThank you for choosing KavishkaLK Laptop Care!`;
+    const plainText = `Dear ${recipientName},\n\nHere is your repair invoice ${invoiceNumber} for your ${invoice.device_name || 'device'}:\nTotal Amount: Rs. ${Number(invoice.total_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\nPayment Status: ${invoice.payment_status || 'unpaid'}\n\nThank you for choosing KavishkaLK Laptop Care!`;
 
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
             from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
-            subject: `🧾 Invoice ${invoiceNumber}: ${invoice.device_name || 'Laptop'} Repair ($${Number(invoice.total_amount || 0).toFixed(2)})`,
+            subject: `🧾 Invoice ${invoiceNumber}: ${invoice.device_name || 'Laptop'} Repair (Rs. ${Number(invoice.total_amount || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`,
             text: plainText,
             html: htmlContent,
         });

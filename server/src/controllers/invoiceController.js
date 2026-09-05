@@ -13,6 +13,12 @@ const invoiceController = {
         try {
             const invoice = await InvoiceModel.findById(req.params.id);
             if (!invoice) return res.status(404).json({ error: 'Invoice not found' });
+            if (invoice.job_id) {
+                const JobModel = require('../models/Job');
+                invoice.parts = await JobModel.getParts(invoice.job_id);
+            } else {
+                invoice.parts = [];
+            }
             res.json(invoice);
         } catch (error) { next(error); }
     },
@@ -48,6 +54,11 @@ const invoiceController = {
             
             const JobModel = require('../models/Job');
             const job = await JobModel.findById(invoice.job_id);
+            if (invoice.job_id) {
+                invoice.parts = await JobModel.getParts(invoice.job_id);
+            } else {
+                invoice.parts = [];
+            }
             
             const targetEmail = req.body.email || invoice.customer_email || job?.customer_email;
             if (!targetEmail) {

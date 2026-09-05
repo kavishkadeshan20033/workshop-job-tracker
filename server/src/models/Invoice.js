@@ -5,10 +5,12 @@ const InvoiceModel = {
         return queryAll(`
             SELECT i.*, j.problem_description AS job_description, j.device_name,
             CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
-            c.phone AS customer_phone, c.email AS customer_email
+            c.phone AS customer_phone, c.email AS customer_email,
+            d.brand AS device_brand, d.model AS device_model
             FROM invoices i
             LEFT JOIN jobs j ON i.job_id = j.id
             LEFT JOIN customers c ON j.customer_id = c.id
+            LEFT JOIN devices d ON j.device_id = d.id
             ORDER BY i.issued_at DESC
         `);
     },
@@ -17,10 +19,12 @@ const InvoiceModel = {
         return queryOne(`
             SELECT i.*, j.problem_description AS job_description, j.date_in, j.date_out, j.device_name,
             CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
-            c.phone AS customer_phone, c.email AS customer_email, c.address AS customer_address
+            c.phone AS customer_phone, c.email AS customer_email, c.address AS customer_address,
+            d.brand AS device_brand, d.model AS device_model, d.serial_number AS device_serial
             FROM invoices i
             LEFT JOIN jobs j ON i.job_id = j.id
             LEFT JOIN customers c ON j.customer_id = c.id
+            LEFT JOIN devices d ON j.device_id = d.id
             WHERE i.id = ?
         `, [id]);
     },

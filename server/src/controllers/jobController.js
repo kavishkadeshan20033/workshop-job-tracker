@@ -241,7 +241,7 @@ const jobController = {
                     await JobNoteModel.create({ job_id: job.id, employee_id: req.user.id, description: `✅ Admin verified: ${note}` });
                 }
 
-                await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_APPROVE', entity: 'jobs', entity_id: job.id, details: `Job approved and completed (Service Price: $${finalLabor.toFixed(2)})`, ip_address: req.ip });
+                await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_APPROVE', entity: 'jobs', entity_id: job.id, details: `Job approved and completed (Service Price: Rs. ${finalLabor.toFixed(2)})`, ip_address: req.ip });
 
                 // Dispatch approval notifications (awaited for serverless runtime)
                 try {
@@ -389,7 +389,7 @@ const jobController = {
                 action: 'ADD_PART', 
                 entity: 'jobs', 
                 entity_id: parseInt(jobId), 
-                details: `Added ${quantity}x ${part.name} ($${unitPrice.toFixed(2)}/unit)`, 
+                details: `Added ${quantity}x ${part.name} (Rs. ${unitPrice.toFixed(2)}/unit)`, 
                 ip_address: req.ip 
             });
 

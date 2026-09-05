@@ -103,7 +103,7 @@ export default function Dashboard() {
         },
         {
             label: 'Monthly Revenue',
-            value: `$${Number(stats?.monthly_revenue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`,
+            value: `Rs. ${Number(stats?.monthly_revenue || 0).toLocaleString('en-LK', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
             icon: <HiOutlineChartBar size={24} />,
             color: '#8b5cf6',
             iconBg: '#ede9fe',

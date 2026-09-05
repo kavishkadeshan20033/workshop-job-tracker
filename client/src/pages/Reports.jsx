@@ -42,8 +42,8 @@ export default function Reports() {
             'Status': j.status,
             'Priority': j.priority,
             'Date In': j.date_in,
-            'Estimated Cost': j.estimated_cost || 0,
-            'Final Cost': j.final_cost || 0,
+            'Estimated Cost (Rs.)': j.estimated_cost || 0,
+            'Final Cost (Rs.)': j.final_cost || 0,
         }));
         const csv = Papa.unparse(csvData);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -75,19 +75,19 @@ export default function Reports() {
         doc.text(`Completed: ${report.summary.completed}`, 14, 48);
         doc.text(`In Progress: ${report.summary.in_progress}`, 80, 42);
         doc.text(`Pending: ${report.summary.pending}`, 80, 48);
-        doc.text(`Total Projected Value: $${Number(report.summary.total_revenue || 0).toFixed(2)}`, 140, 42);
+        doc.text(`Total Projected Value: Rs. ${Number(report.summary.total_revenue || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 140, 42);
 
         // Table
         doc.autoTable({
             startY: 55,
-            head: [['ID', 'Device', 'Problem', 'Customer', 'Status', 'Cost']],
+            head: [['ID', 'Device', 'Problem', 'Customer', 'Status', 'Cost (Rs.)']],
             body: report.jobs.map((j) => [
                 j.id, 
                 j.device_name?.substring(0, 20),
                 j.problem_description?.substring(0, 30), 
                 j.customer_name, 
                 j.status.replace('_', ' '), 
-                `$${Number(j.final_cost || j.estimated_cost || 0).toFixed(2)}`
+                `Rs. ${Number(j.final_cost || j.estimated_cost || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             ]),
             styles: { fontSize: 8, cellPadding: 3 },
             headStyles: { fillColor: [59, 130, 246], textColor: 255 },
@@ -168,7 +168,7 @@ export default function Reports() {
                         </div>
                         <div className="card text-center" style={{ borderTop: '3px solid #6366f1' }}>
                             <div className="text-sm text-muted mb-xs">Projected Value</div>
-                            <div className="text-2xl font-bold text-primary">${Number(report.summary.total_revenue || 0).toFixed(2)}</div>
+                            <div className="text-2xl font-bold text-primary">Rs. {Number(report.summary.total_revenue || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                         </div>
                     </div>
 
@@ -209,7 +209,7 @@ export default function Reports() {
                                                 <th>Customer</th>
                                                 <th>Technician</th>
                                                 <th>Status</th>
-                                                <th>Cost</th>
+                                                <th>Cost (Rs.)</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -229,7 +229,7 @@ export default function Reports() {
                                                             {j.status?.replace('_', ' ')}
                                                         </span>
                                                     </td>
-                                                    <td className="font-semibold">${Number(j.final_cost || j.estimated_cost || 0).toFixed(2)}</td>
+                                                    <td className="font-semibold">Rs. {Number(j.final_cost || j.estimated_cost || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                                 </tr>
                                             ))}
                                         </tbody>

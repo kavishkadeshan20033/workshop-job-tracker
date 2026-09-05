@@ -96,7 +96,7 @@ export default function Parts() {
                                     <th>Supplier</th>
                                     <th>Category</th>
                                     <th>Stock</th>
-                                    <th>Price</th>
+                                    <th>Price (Rs.)</th>
                                     <th className="text-right">Actions</th>
                                 </tr>
                             </thead>
@@ -114,7 +114,7 @@ export default function Parts() {
                                                 {p.stock_qty} (Reorder: {p.reorder_level})
                                             </span>
                                         </td>
-                                        <td>${Number(p.unit_price || 0).toFixed(2)}</td>
+                                        <td className="font-semibold">Rs. {Number(p.unit_price || 0).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                                         <td className="text-right">
                                             <button className="btn btn-icon btn-ghost" onClick={() => openEdit(p)}><HiPencil /></button>
                                             <button className="btn btn-icon btn-danger" onClick={() => handleDelete(p.id)}><HiTrash /></button>
@@ -149,7 +149,7 @@ export default function Parts() {
                     </div>
                     <div className="grid grid-2 gap-md">
                         <div className="form-group">
-                            <label className="form-label">Unit Price *</label>
+                            <label className="form-label">Unit Price (Rs.) *</label>
                             <input className="form-input" name="unit_price" type="number" step="0.01" defaultValue={editing?.unit_price} required />
                         </div>
                         <div className="form-group">

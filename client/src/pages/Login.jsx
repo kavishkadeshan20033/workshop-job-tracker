@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FaWrench } from 'react-icons/fa';
 import { HiOutlineUser, HiOutlineLockClosed, HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 import toast from 'react-hot-toast';
 
@@ -37,9 +36,7 @@ export default function Login() {
             {/* Left — Dark hero panel */}
             <div className="login-left">
                 <div className="login-brand">
-                    <div className="login-brand-icon">
-                        <FaWrench />
-                    </div>
+                    <img src="/logo.png" alt="WorkshopTracker" className="login-brand-img" />
                     <div>
                         <div className="login-brand-name">WorkshopTracker</div>
                         <div className="login-brand-tag">Job Management System</div>

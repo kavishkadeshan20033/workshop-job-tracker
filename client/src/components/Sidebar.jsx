@@ -7,7 +7,6 @@ import {
     HiOutlineLogout, HiOutlineUserGroup, HiOutlineIdentification,
     HiOutlineDesktopComputer, HiOutlineMenu, HiOutlineX
 } from 'react-icons/hi';
-import { FaWrench } from 'react-icons/fa';
 
 export default function Sidebar() {
     const { user, logout, isAdmin } = useAuth();
@@ -39,9 +38,7 @@ export default function Sidebar() {
             {/* Logo */}
             <div className="sidebar-header">
                 <div className="sidebar-logo">
-                    <div className="sidebar-logo-icon">
-                        <FaWrench />
-                    </div>
+                    <img src="/logo.png" alt="WorkshopTracker" className="sidebar-logo-img" />
                     <div className="sidebar-logo-text">
                         <span className="sidebar-logo-title">WorkshopTracker</span>
                         <span className="sidebar-logo-subtitle">Job Management</span>
@@ -109,9 +106,7 @@ export default function Sidebar() {
             {/* Mobile Top Bar */}
             <div className="mobile-topbar">
                 <div className="mobile-topbar-brand">
-                    <div className="sidebar-logo-icon" style={{ width: 30, height: 30, fontSize: '0.9rem' }}>
-                        <FaWrench />
-                    </div>
+                    <img src="/logo.png" alt="WorkshopTracker" className="mobile-topbar-logo-img" />
                     <span className="sidebar-logo-title">WorkshopTracker</span>
                 </div>
                 <button className="mobile-menu-btn" onClick={() => setMobileOpen(true)}>

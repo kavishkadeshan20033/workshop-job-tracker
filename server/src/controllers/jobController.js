@@ -4,6 +4,25 @@ const AuditModel = require('../models/Audit');
 const { sendJobAssignedEmail, sendJobCreatedCustomerEmail } = require('../utils/email');
 const logger = require('../middleware/logger');
 
+async function resolveTechnicianEmail(fullJob) {
+    if (fullJob?.technician_email) return fullJob.technician_email;
+    try {
+        if (fullJob?.technician_id) {
+            const TechnicianModel = require('../models/Technician');
+            const tech = await TechnicianModel.findById(fullJob.technician_id);
+            if (tech?.email) return tech.email;
+        }
+        if (fullJob?.technician_name) {
+            const UserModel = require('../models/User');
+            const u = await UserModel.findByUsername(fullJob.technician_name);
+            if (u?.email) return u.email;
+        }
+    } catch (e) {
+        logger.warn(`Could not resolve technician email: ${e.message}`);
+    }
+    return null;
+}
+
 const jobController = {
     async getAll(req, res, next) {
         try {
@@ -35,33 +54,40 @@ const jobController = {
             // Fetch complete job record with customer and technician details
             const fullJob = await JobModel.findById(job.id);
 
-            // Asynchronously dispatch email notifications (non-blocking)
-            (async () => {
-                try {
-                    // 1. Notify assigned technician
-                    if (fullJob?.technician_email) {
-                        logger.info(`Notifying technician ${fullJob.technician_name} (${fullJob.technician_email}) for Job #${job.id}`);
-                        await sendJobAssignedEmail({
-                            to: fullJob.technician_email,
-                            technicianName: fullJob.technician_name || 'Technician',
+            // Await email dispatch before ending function (critical for serverless / Vercel runtime)
+            try {
+                const techEmail = await resolveTechnicianEmail(fullJob);
+                const emailPromises = [];
+
+                if (techEmail) {
+                    logger.info(`Sending job assignment email to technician ${fullJob?.technician_name} (${techEmail}) for Job #${job.id}`);
+                    emailPromises.push(
+                        sendJobAssignedEmail({
+                            to: techEmail,
+                            technicianName: fullJob?.technician_name || 'Technician',
                             job: fullJob,
                             assignedBy: req.user.username || 'Admin'
-                        });
-                    }
+                        })
+                    );
+                }
 
-                    // 2. Notify customer (if email provided)
-                    if (fullJob?.customer_email) {
-                        logger.info(`Notifying customer ${fullJob.customer_name} (${fullJob.customer_email}) for Job #${job.id}`);
-                        await sendJobCreatedCustomerEmail({
+                if (fullJob?.customer_email) {
+                    logger.info(`Sending job confirmation email to customer ${fullJob.customer_name} (${fullJob.customer_email}) for Job #${job.id}`);
+                    emailPromises.push(
+                        sendJobCreatedCustomerEmail({
                             to: fullJob.customer_email,
                             customerName: fullJob.customer_name || 'Valued Customer',
                             job: fullJob
-                        });
-                    }
-                } catch (emailErr) {
-                    logger.error(`Error sending email notifications for Job #${job.id}: ${emailErr.message}`);
+                        })
+                    );
                 }
-            })();
+
+                if (emailPromises.length > 0) {
+                    await Promise.allSettled(emailPromises);
+                }
+            } catch (emailErr) {
+                logger.error(`Error sending email notifications for Job #${job.id}: ${emailErr.message}`);
+            }
 
             res.status(201).json(fullJob || job);
         } catch (error) { next(error); }
@@ -82,20 +108,19 @@ const jobController = {
 
             if (isTechnicianReassigned) {
                 const fullJob = await JobModel.findById(job.id);
-                if (fullJob?.technician_email) {
-                    (async () => {
-                        try {
-                            logger.info(`Notifying reassigned technician ${fullJob.technician_name} (${fullJob.technician_email}) for Job #${job.id}`);
-                            await sendJobAssignedEmail({
-                                to: fullJob.technician_email,
-                                technicianName: fullJob.technician_name || 'Technician',
-                                job: fullJob,
-                                assignedBy: req.user.username || 'Admin'
-                            });
-                        } catch (emailErr) {
-                            logger.error(`Error sending reassignment email for Job #${job.id}: ${emailErr.message}`);
-                        }
-                    })();
+                const techEmail = await resolveTechnicianEmail(fullJob);
+                if (techEmail) {
+                    try {
+                        logger.info(`Sending reassignment email to technician ${fullJob?.technician_name} (${techEmail}) for Job #${job.id}`);
+                        await sendJobAssignedEmail({
+                            to: techEmail,
+                            technicianName: fullJob?.technician_name || 'Technician',
+                            job: fullJob,
+                            assignedBy: req.user.username || 'Admin'
+                        });
+                    } catch (emailErr) {
+                        logger.error(`Error sending reassignment email for Job #${job.id}: ${emailErr.message}`);
+                    }
                 }
             }
 

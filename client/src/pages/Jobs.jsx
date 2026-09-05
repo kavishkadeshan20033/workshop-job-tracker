@@ -90,16 +90,37 @@ export default function Jobs() {
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
 
+        const hasTechnician = !!data.technician_id;
         if (!data.technician_id) delete data.technician_id;
         if (!data.device_id) delete data.device_id;
 
         try {
             await jobAPI.create(data);
-            toast.success('Job created successfully');
+            toast.success(hasTechnician ? 'Job created & email notification sent to technician!' : 'Job created successfully');
             setIsCreateModalOpen(false);
             fetchData();
         } catch (error) {
             toast.error(error.response?.data?.error || 'Failed to create job');
+        }
+    };
+
+    const handleAssignTechnician = async (jobId, technicianId) => {
+        try {
+            const techId = technicianId ? parseInt(technicianId) : null;
+            await jobAPI.update(jobId, { technician_id: techId });
+            
+            const techObj = technicians.find(t => t.id === techId);
+            if (techObj) {
+                toast.success(`Assigned to ${techObj.name} — email notification sent!`);
+            } else {
+                toast.success('Job unassigned successfully.');
+            }
+
+            const updated = await jobAPI.getById(jobId);
+            setSelectedJob(updated.data);
+            fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.error || 'Failed to update technician assignment');
         }
     };
 
@@ -355,7 +376,23 @@ export default function Jobs() {
                                     </div>
                                     <div>
                                         <small className="text-muted block">Technician</small>
-                                        <span className="font-semibold">{selectedJob.technician_name || 'Unassigned'}</span>
+                                        {isAdmin ? (
+                                            <select
+                                                className="form-input text-sm"
+                                                style={{ marginTop: '4px', padding: '4px 8px' }}
+                                                value={selectedJob.technician_id || ''}
+                                                onChange={(e) => handleAssignTechnician(selectedJob.id, e.target.value)}
+                                            >
+                                                <option value="">-- Unassigned --</option>
+                                                {technicians.map(t => (
+                                                    <option key={t.id} value={t.id}>
+                                                        {t.name} ({t.specialization || 'General'})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <span className="font-semibold">{selectedJob.technician_name || 'Unassigned'}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>

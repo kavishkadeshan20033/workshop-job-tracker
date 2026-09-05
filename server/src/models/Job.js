@@ -70,22 +70,21 @@ const JobModel = {
         return this.findById(result.lastInsertRowid);
     },
 
-    async update(id, { device_id, technician_id, status, priority, date_out, estimated_cost, final_cost, device_name, problem_description }) {
-        await runQuery(
-            `UPDATE jobs SET 
-                device_id = COALESCE(?, device_id),
-                technician_id = COALESCE(?, technician_id),
-                status = COALESCE(?, status),
-                priority = COALESCE(?, priority),
-                date_out = COALESCE(?, date_out),
-                estimated_cost = COALESCE(?, estimated_cost),
-                final_cost = COALESCE(?, final_cost),
-                device_name = COALESCE(?, device_name),
-                problem_description = COALESCE(?, problem_description),
-                updated_at = NOW()
-            WHERE id = ?`,
-            [device_id !== undefined ? (device_id || null) : null, technician_id || null, status || null, priority || null, date_out || null, estimated_cost !== undefined ? estimated_cost : null, final_cost !== undefined ? final_cost : null, device_name || null, problem_description || null, id]
-        );
+    async update(id, data) {
+        const allowed = ['device_id', 'technician_id', 'status', 'priority', 'date_out', 'estimated_cost', 'final_cost', 'device_name', 'problem_description'];
+        const fields = [];
+        const params = [];
+        for (const key of allowed) {
+            if (data[key] !== undefined) {
+                fields.push(`${key} = ?`);
+                params.push(data[key] === '' ? null : data[key]);
+            }
+        }
+        if (fields.length > 0) {
+            fields.push('updated_at = NOW()');
+            params.push(id);
+            await runQuery(`UPDATE jobs SET ${fields.join(', ')} WHERE id = ?`, params);
+        }
         return this.findById(id);
     },
 

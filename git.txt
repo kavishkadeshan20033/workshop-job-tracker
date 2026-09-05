@@ -1,11 +1,11 @@
 # 1. Check changed files
 git status
 
-# 2. Stage all modified and deleted files
+# 2. Stage all modified files
 git add .
 
 # 3. Commit the changes
-git commit -m "Add email notification when new job is assigned to technician and customer"
+git commit -m "Fix job assignment email dispatch: await serverless promise, technician selector in details modal, and dynamic job updates"
 
 # 4. Push to your main GitHub branch
 git push origin main

@@ -29,7 +29,10 @@ router.patch('/:id/status', [
 // Admin-only: Verify (approve/reject) a job marked as done
 router.patch('/:id/verify', authorize('admin'), [
     body('action').isIn(['approve', 'reject']),
-    body('note').optional().isString()
+    body('note').optional().isString(),
+    body('service_price').optional().isFloat({ min: 0 }),
+    body('labor_total').optional().isFloat({ min: 0 }),
+    body('tax_rate').optional().isFloat({ min: 0, max: 1 })
 ], validate, jobController.verifyJob);
 
 // Notes (both admin and employee)

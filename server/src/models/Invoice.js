@@ -4,7 +4,8 @@ const InvoiceModel = {
     async findAll() {
         return queryAll(`
             SELECT i.*, j.problem_description AS job_description, j.device_name,
-            CONCAT(c.first_name, ' ', c.last_name) AS customer_name
+            CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+            c.phone AS customer_phone, c.email AS customer_email
             FROM invoices i
             LEFT JOIN jobs j ON i.job_id = j.id
             LEFT JOIN customers c ON j.customer_id = c.id
@@ -29,6 +30,11 @@ const InvoiceModel = {
     },
 
     async create({ job_id, labor_total = 0, tax_rate = 0.10, notes }) {
+        const existing = await this.findByJobId(job_id);
+        if (existing) {
+            return this.update(existing.id, { labor_total, tax_rate, notes });
+        }
+
         const partsRow = await queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [job_id]);
         const partsTotal = partsRow?.total || 0;
         const subtotal = parseFloat(labor_total) + parseFloat(partsTotal);
@@ -42,11 +48,39 @@ const InvoiceModel = {
         return this.findById(result.lastInsertRowid);
     },
 
-    async update(id, { payment_status, notes }) {
-        const paidAt = payment_status === 'paid' ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null;
+    async update(id, data = {}) {
+        const existing = await this.findById(id);
+        if (!existing) return null;
+
+        const newLabor = data.labor_total !== undefined ? parseFloat(data.labor_total) : parseFloat(existing.labor_total || 0);
+        const newTaxRate = data.tax_rate !== undefined ? parseFloat(data.tax_rate) : parseFloat(existing.tax_rate || 0.10);
+        
+        let newParts = data.parts_total !== undefined ? parseFloat(data.parts_total) : parseFloat(existing.parts_total || 0);
+        if (data.parts_total === undefined && existing.job_id) {
+            const partsRow = await queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [existing.job_id]);
+            if (partsRow) newParts = parseFloat(partsRow.total || 0);
+        }
+
+        const subtotal = newLabor + newParts;
+        const taxAmount = subtotal * newTaxRate;
+        const totalAmount = subtotal + taxAmount;
+
+        const paymentStatus = data.payment_status !== undefined ? data.payment_status : existing.payment_status;
+        const paidAt = paymentStatus === 'paid' ? (existing.paid_at || new Date().toISOString().slice(0, 19).replace('T', ' ')) : null;
+        const notes = data.notes !== undefined ? data.notes : existing.notes;
+
         await runQuery(
-            'UPDATE invoices SET payment_status = COALESCE(?, payment_status), paid_at = COALESCE(?, paid_at), notes = COALESCE(?, notes) WHERE id = ?',
-            [payment_status || null, paidAt, notes || null, id]
+            `UPDATE invoices SET 
+             labor_total = ?, 
+             parts_total = ?, 
+             tax_rate = ?, 
+             tax_amount = ?, 
+             total_amount = ?, 
+             payment_status = ?, 
+             paid_at = ?, 
+             notes = ?
+             WHERE id = ?`,
+            [newLabor, newParts, newTaxRate, taxAmount, totalAmount, paymentStatus, paidAt, notes || null, id]
         );
         return this.findById(id);
     },

@@ -43,7 +43,12 @@ const partController = {
             await PartModel.delete(req.params.id);
             await AuditModel.log({ user_id: req.user.id, action: 'DELETE', entity: 'parts', entity_id: parseInt(req.params.id), ip_address: req.ip });
             res.json({ message: 'Part deleted successfully' });
-        } catch (error) { next(error); }
+        } catch (error) {
+            if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
+                return res.status(400).json({ error: 'Cannot delete this part because it is currently used in one or more repair jobs.' });
+            }
+            next(error);
+        }
     },
 
     async getLowStock(req, res, next) {

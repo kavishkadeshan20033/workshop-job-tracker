@@ -193,33 +193,53 @@ const jobController = {
             const existing = await JobModel.findById(req.params.id);
             if (!existing) return res.status(404).json({ error: 'Job not found' });
 
-            const { action, note } = req.body;
+            const { action, note, service_price, labor_total, tax_rate } = req.body;
 
             if (action === 'approve') {
                 const job = await JobModel.update(req.params.id, { status: 'completed' });
 
-                // Auto-generate invoice if not already exists
+                // Auto-generate or update invoice with real pricing
                 const InvoiceModel = require('../models/Invoice');
-                const existingInvoice = await InvoiceModel.findByJobId(job.id);
-                if (!existingInvoice) {
-                    const db = require('../config/db');
-                    const partsRow = await db.queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [job.id]);
-                    const partsTotal = partsRow?.total || 0;
-                    const laborTotal = Math.max(0, (job.estimated_cost || 0) - partsTotal);
+                const db = require('../config/db');
+                const partsRow = await db.queryOne('SELECT COALESCE(SUM(quantity_used * unit_price_at_time), 0) as total FROM job_parts WHERE job_id = ?', [job.id]);
+                const partsTotal = partsRow?.total || 0;
+                
+                // Determine labor charge: prioritize explicitly passed service_price / labor_total
+                let finalLabor = 0;
+                if (service_price !== undefined && service_price !== null && service_price !== '') {
+                    finalLabor = parseFloat(service_price);
+                } else if (labor_total !== undefined && labor_total !== null && labor_total !== '') {
+                    finalLabor = parseFloat(labor_total);
+                } else {
+                    finalLabor = Math.max(0, (job.estimated_cost || 0) - partsTotal);
+                }
 
+                const finalTaxRate = (tax_rate !== undefined && tax_rate !== null && tax_rate !== '') ? parseFloat(tax_rate) : 0.10;
+
+                const existingInvoice = await InvoiceModel.findByJobId(job.id);
+                if (existingInvoice) {
+                    await InvoiceModel.update(existingInvoice.id, {
+                        labor_total: finalLabor,
+                        tax_rate: finalTaxRate,
+                        notes: note ? `Admin verified: ${note}` : existingInvoice.notes
+                    });
+                } else {
                     await InvoiceModel.create({
                         job_id: job.id,
-                        labor_total: laborTotal,
-                        tax_rate: 0.10,
-                        notes: 'Auto-generated invoice after admin verification.'
+                        labor_total: finalLabor,
+                        tax_rate: finalTaxRate,
+                        notes: note ? `Admin verified: ${note}` : 'Invoice generated upon admin verification.'
                     });
                 }
+
+                const finalCost = (finalLabor + partsTotal) * (1 + finalTaxRate);
+                await JobModel.update(job.id, { final_cost: finalCost });
 
                 if (note) {
                     await JobNoteModel.create({ job_id: job.id, employee_id: req.user.id, description: `✅ Admin verified: ${note}` });
                 }
 
-                await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_APPROVE', entity: 'jobs', entity_id: job.id, details: 'Job approved and completed', ip_address: req.ip });
+                await AuditModel.log({ user_id: req.user.id, action: 'VERIFY_APPROVE', entity: 'jobs', entity_id: job.id, details: `Job approved and completed (Service Price: $${finalLabor.toFixed(2)})`, ip_address: req.ip });
 
                 // Dispatch approval notifications (awaited for serverless runtime)
                 try {

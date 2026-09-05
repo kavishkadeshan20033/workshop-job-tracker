@@ -77,6 +77,7 @@ router.post('/', authenticate, authorize('admin'), [
  *         description: Invoice updated
  */
 router.put('/:id', authenticate, authorize('admin'), invoiceController.update);
+router.post('/:id/send-email', authenticate, authorize('admin'), invoiceController.sendInvoiceEmail);
 
 /**
  * @swagger

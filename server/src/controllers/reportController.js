@@ -34,8 +34,9 @@ const reportController = {
                 pending: jobs.filter(j => j.status === 'pending').length,
                 cancelled: jobs.filter(j => j.status === 'cancelled').length,
                 total_revenue: stats.total_revenue,
-                top_vehicle: stats.top_vehicle,
-                top_part: stats.top_part,
+                top_device: stats.top_device || stats.top_vehicle || 'N/A',
+                top_vehicle: stats.top_device || stats.top_vehicle || 'N/A',
+                top_part: stats.top_part || 'N/A',
             };
             res.json({ summary, jobs });
         } catch (error) { next(error); }

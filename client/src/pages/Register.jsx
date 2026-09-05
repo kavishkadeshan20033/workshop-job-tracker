@@ -52,10 +52,10 @@ export default function Register() {
             {/* Left — Dark hero panel */}
             <div className="login-left">
                 <div className="login-brand">
-                    <img src="/logo.png" alt="WorkshopTracker" className="login-brand-img" />
+                    <img src="/logo.png" alt="KavishkaLK" className="login-brand-img" />
                     <div>
-                        <div className="login-brand-name">WorkshopTracker</div>
-                        <div className="login-brand-tag">Job Management System</div>
+                        <div className="login-brand-name">KavishkaLK</div>
+                        <div className="login-brand-tag">Laptop Repair & Service Management</div>
                     </div>
                 </div>
 
@@ -114,7 +114,7 @@ export default function Register() {
                         <label className="form-label">Email *</label>
                         <div className="form-input-with-icon">
                             <span className="form-input-icon"><HiOutlineMail /></span>
-                            <input className="form-input" type="email" placeholder="john@workshop.com"
+                            <input className="form-input" type="email" placeholder="john@example.com"
                                 value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                         </div>
                     </div>
@@ -158,7 +158,7 @@ export default function Register() {
                     color: 'var(--text-light)',
                     textAlign: 'center'
                 }}>
-                    © {new Date().getFullYear()} WorkshopTracker. All rights reserved.
+                    © {new Date().getFullYear()} KavishkaLK. All rights reserved.
                 </div>
             </div>
         </div>

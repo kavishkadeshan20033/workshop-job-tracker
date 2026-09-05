@@ -41,10 +41,10 @@ export default function Sidebar() {
             {/* Logo */}
             <div className="sidebar-header">
                 <div className="sidebar-logo">
-                    <img src="/logo.png" alt="WorkshopTracker" className="sidebar-logo-img" />
+                    <img src="/logo.png" alt="KavishkaLK Laptop Care" className="sidebar-logo-img" />
                     <div className="sidebar-logo-text">
-                        <span className="sidebar-logo-title">WorkshopTracker</span>
-                        <span className="sidebar-logo-subtitle">Job Management</span>
+                        <span className="sidebar-logo-title">KavishkaLK</span>
+                        <span className="sidebar-logo-subtitle">Laptop Care &bull; Service</span>
                     </div>
                 </div>
                 {/* Mobile close button */}
@@ -121,8 +121,8 @@ export default function Sidebar() {
             {/* Mobile Top Bar */}
             <div className="mobile-topbar">
                 <div className="mobile-topbar-brand">
-                    <img src="/logo.png" alt="WorkshopTracker" className="mobile-topbar-logo-img" />
-                    <span className="sidebar-logo-title">WorkshopTracker</span>
+                    <img src="/logo.png" alt="KavishkaLK" className="mobile-topbar-logo-img" />
+                    <span className="sidebar-logo-title">KavishkaLK</span>
                 </div>
                 <button className="mobile-menu-btn" onClick={() => setMobileOpen(true)}>
                     <HiOutlineMenu />

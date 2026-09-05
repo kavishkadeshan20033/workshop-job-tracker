@@ -65,7 +65,7 @@ export default function Reports() {
 
         doc.setFontSize(18);
         doc.setTextColor(40, 40, 40);
-        doc.text('Workshop Job Tracker', 14, 20);
+        doc.text('KavishkaLK - Laptop Repair & Service Management', 14, 20);
         doc.setFontSize(12);
         doc.text(title, 14, 30);
 

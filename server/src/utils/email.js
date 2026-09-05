@@ -28,7 +28,7 @@ function getTransporter() {
  * Send password reset verification code email
  */
 async function sendPasswordResetEmail({ to, name, code }) {
-    const sender = process.env.SMTP_USER || 'no-reply@workshoptracker.com';
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
     const recipientName = name || 'User';
 
     const htmlContent = `
@@ -37,7 +37,7 @@ async function sendPasswordResetEmail({ to, name, code }) {
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Reset Your WorkshopTracker Password</title>
+      <title>Reset Your KavishkaLK Password</title>
       <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; }
         .container { max-width: 540px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #eaecef; }
@@ -58,13 +58,13 @@ async function sendPasswordResetEmail({ to, name, code }) {
     <body>
       <div class="container">
         <div class="header">
-          <div class="header-title">WorkshopTracker</div>
+          <div class="header-title">KavishkaLK</div>
           <div class="header-subtitle">Password Reset Verification</div>
         </div>
         <div class="content">
           <div class="greeting">Hello, ${recipientName}</div>
           <p class="instruction">
-            We received a request to reset the password for your WorkshopTracker account. Use the verification code below to complete your password reset:
+            We received a request to reset the password for your KavishkaLK account. Use the verification code below to complete your password reset:
           </p>
           <div class="code-box">
             <div class="code-label">Verification Code</div>
@@ -79,7 +79,7 @@ async function sendPasswordResetEmail({ to, name, code }) {
           </div>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} WorkshopTracker. Job Management System.
+          &copy; ${new Date().getFullYear()} KavishkaLK. Laptop Repair & Service Management.
         </div>
       </div>
     </body>
@@ -89,10 +89,10 @@ async function sendPasswordResetEmail({ to, name, code }) {
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
-            from: `"WorkshopTracker" <${sender}>`,
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
-            subject: `${code} is your WorkshopTracker verification code`,
-            text: `Hello ${recipientName},\n\nYour WorkshopTracker password reset verification code is: ${code}\n\nThis code will expire in 15 minutes.\n\nIf you did not request a password reset, please ignore this email.`,
+            subject: `${code} is your KavishkaLK verification code`,
+            text: `Hello ${recipientName},\n\nYour KavishkaLK password reset verification code is: ${code}\n\nThis code will expire in 15 minutes.\n\nIf you did not request a password reset, please ignore this email.`,
             html: htmlContent,
         });
         logger.info(`Password reset email successfully sent to ${to} (MessageId: ${info.messageId})`);
@@ -107,7 +107,7 @@ async function sendPasswordResetEmail({ to, name, code }) {
  * Send notification email to technician when a job is assigned
  */
 async function sendJobAssignedEmail({ to, technicianName, job, assignedBy }) {
-    const sender = process.env.SMTP_USER || 'no-reply@workshoptracker.com';
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
     const recipientName = technicianName || 'Technician';
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const portalJobsUrl = `${clientUrl.replace(/\/$/, '')}/jobs`;
@@ -155,7 +155,7 @@ async function sendJobAssignedEmail({ to, technicianName, job, assignedBy }) {
           <table width="100%" border="0" cellpadding="0" cellspacing="0">
             <tr>
               <td>
-                <span class="header-title">WorkshopTracker</span>
+                <span class="header-title">KavishkaLK</span>
               </td>
               <td align="right">
                 <span class="badge-assigned">New Assignment</span>
@@ -217,11 +217,11 @@ async function sendJobAssignedEmail({ to, technicianName, job, assignedBy }) {
           </div>
 
           <div class="btn-container">
-            <a href="${portalJobsUrl}" class="btn">Open Jobs in WorkshopTracker &rarr;</a>
+            <a href="${portalJobsUrl}" class="btn">Open Jobs in KavishkaLK &rarr;</a>
           </div>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} WorkshopTracker &bull; Automated notification sent to ${to}
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; Automated notification sent to ${to}
         </div>
       </div>
     </body>
@@ -233,7 +233,7 @@ async function sendJobAssignedEmail({ to, technicianName, job, assignedBy }) {
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
-            from: `"WorkshopTracker" <${sender}>`,
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
             subject: `🔧 New Job Assigned: Job #${job.id} — ${job.device_name}`,
             text: plainText,
@@ -251,7 +251,7 @@ async function sendJobAssignedEmail({ to, technicianName, job, assignedBy }) {
  * Send confirmation email to customer when a job is created
  */
 async function sendJobCreatedCustomerEmail({ to, customerName, job }) {
-    const sender = process.env.SMTP_USER || 'no-reply@workshoptracker.com';
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
     const recipientName = customerName || 'Valued Customer';
 
     const formattedDate = job.date_in
@@ -282,7 +282,7 @@ async function sendJobCreatedCustomerEmail({ to, customerName, job }) {
     <body>
       <div class="container">
         <div class="header">
-          <div class="header-title">WorkshopTracker</div>
+          <div class="header-title">KavishkaLK</div>
           <div class="header-subtitle">Repair Service Confirmation</div>
         </div>
         <div class="content">
@@ -330,7 +330,7 @@ async function sendJobCreatedCustomerEmail({ to, customerName, job }) {
           </p>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} WorkshopTracker &bull; Thank you for your business!
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; Thank you for your business!
         </div>
       </div>
     </body>
@@ -342,7 +342,7 @@ async function sendJobCreatedCustomerEmail({ to, customerName, job }) {
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
-            from: `"WorkshopTracker" <${sender}>`,
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
             subject: `Repair Job #${job.id} Received — ${job.device_name}`,
             text: plainText,
@@ -360,7 +360,7 @@ async function sendJobCreatedCustomerEmail({ to, customerName, job }) {
  * Send notification email to technician when admin approves and completes a job
  */
 async function sendJobVerifiedTechnicianEmail({ to, technicianName, job, adminName, note }) {
-    const sender = process.env.SMTP_USER || 'no-reply@workshoptracker.com';
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
     const recipientName = technicianName || 'Technician';
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const portalJobsUrl = `${clientUrl.replace(/\/$/, '')}/jobs`;
@@ -395,7 +395,7 @@ async function sendJobVerifiedTechnicianEmail({ to, technicianName, job, adminNa
           <table width="100%" border="0" cellpadding="0" cellspacing="0">
             <tr>
               <td>
-                <span class="header-title">WorkshopTracker</span>
+                <span class="header-title">KavishkaLK</span>
               </td>
               <td align="right">
                 <span class="badge-verified">Job Approved</span>
@@ -447,7 +447,7 @@ async function sendJobVerifiedTechnicianEmail({ to, technicianName, job, adminNa
           </div>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} WorkshopTracker &bull; Automated notification sent to ${to}
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; Automated notification sent to ${to}
         </div>
       </div>
     </body>
@@ -459,7 +459,7 @@ async function sendJobVerifiedTechnicianEmail({ to, technicianName, job, adminNa
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
-            from: `"WorkshopTracker" <${sender}>`,
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
             subject: `✅ Job #${job.id} Verified & Approved — ${job.device_name}`,
             text: plainText,
@@ -477,7 +477,7 @@ async function sendJobVerifiedTechnicianEmail({ to, technicianName, job, adminNa
  * Send notification email to customer when a job is marked as completed
  */
 async function sendJobCompletedCustomerEmail({ to, customerName, job }) {
-    const sender = process.env.SMTP_USER || 'no-reply@workshoptracker.com';
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
     const recipientName = customerName || 'Valued Customer';
 
     const htmlContent = `
@@ -509,7 +509,7 @@ async function sendJobCompletedCustomerEmail({ to, customerName, job }) {
           <table width="100%" border="0" cellpadding="0" cellspacing="0">
             <tr>
               <td>
-                <span class="header-title">WorkshopTracker</span>
+                <span class="header-title">KavishkaLK</span>
                 <div class="header-subtitle">Repair Completion Notice</div>
               </td>
               <td align="right">
@@ -551,7 +551,7 @@ async function sendJobCompletedCustomerEmail({ to, customerName, job }) {
           </p>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} WorkshopTracker &bull; Thank you for your business!
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; Thank you for your business!
         </div>
       </div>
     </body>
@@ -563,7 +563,7 @@ async function sendJobCompletedCustomerEmail({ to, customerName, job }) {
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
-            from: `"WorkshopTracker" <${sender}>`,
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
             subject: `🎉 Repair Completed: Job #${job.id} — ${job.device_name} is Ready for Pickup!`,
             text: plainText,
@@ -581,7 +581,7 @@ async function sendJobCompletedCustomerEmail({ to, customerName, job }) {
  * Send notification email to technician when admin rejects the completion and sends it back
  */
 async function sendJobRejectedTechnicianEmail({ to, technicianName, job, adminName, note }) {
-    const sender = process.env.SMTP_USER || 'no-reply@workshoptracker.com';
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
     const recipientName = technicianName || 'Technician';
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const portalJobsUrl = `${clientUrl.replace(/\/$/, '')}/jobs`;
@@ -616,7 +616,7 @@ async function sendJobRejectedTechnicianEmail({ to, technicianName, job, adminNa
           <table width="100%" border="0" cellpadding="0" cellspacing="0">
             <tr>
               <td>
-                <span class="header-title">WorkshopTracker</span>
+                <span class="header-title">KavishkaLK</span>
               </td>
               <td align="right">
                 <span class="badge-reject">Sent Back</span>
@@ -660,7 +660,7 @@ async function sendJobRejectedTechnicianEmail({ to, technicianName, job, adminNa
           </div>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} WorkshopTracker &bull; Automated notification sent to ${to}
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; Automated notification sent to ${to}
         </div>
       </div>
     </body>
@@ -672,7 +672,7 @@ async function sendJobRejectedTechnicianEmail({ to, technicianName, job, adminNa
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
-            from: `"WorkshopTracker" <${sender}>`,
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
             subject: `↩ Action Required: Job #${job.id} Sent Back for Review — ${job.device_name}`,
             text: plainText,
@@ -690,7 +690,7 @@ async function sendJobRejectedTechnicianEmail({ to, technicianName, job, adminNa
  * Send notification email to admin when a technician marks a job as done
  */
 async function sendJobPendingVerificationAdminEmail({ to, adminName, job, technicianName }) {
-    const sender = process.env.SMTP_USER || 'no-reply@workshoptracker.com';
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
     const recipientName = adminName || 'Admin';
     const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const portalJobsUrl = `${clientUrl.replace(/\/$/, '')}/jobs`;
@@ -724,7 +724,7 @@ async function sendJobPendingVerificationAdminEmail({ to, adminName, job, techni
           <table width="100%" border="0" cellpadding="0" cellspacing="0">
             <tr>
               <td>
-                <span class="header-title">WorkshopTracker</span>
+                <span class="header-title">KavishkaLK</span>
               </td>
               <td align="right">
                 <span class="badge-pending">Needs Verification</span>
@@ -767,7 +767,7 @@ async function sendJobPendingVerificationAdminEmail({ to, adminName, job, techni
           </div>
         </div>
         <div class="footer">
-          &copy; ${new Date().getFullYear()} WorkshopTracker &bull; Automated notification sent to ${to}
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; Automated notification sent to ${to}
         </div>
       </div>
     </body>
@@ -779,7 +779,7 @@ async function sendJobPendingVerificationAdminEmail({ to, adminName, job, techni
     try {
         const mailClient = getTransporter();
         const info = await mailClient.sendMail({
-            from: `"WorkshopTracker" <${sender}>`,
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
             to,
             subject: `⏳ Job #${job.id} Marked as Done — Ready for Verification (${job.device_name})`,
             text: plainText,
@@ -793,6 +793,150 @@ async function sendJobPendingVerificationAdminEmail({ to, adminName, job, techni
     }
 }
 
+/**
+ * Send itemized invoice receipt to customer
+ */
+async function sendCustomerInvoiceEmail({ to, customerName, invoice, job }) {
+    const sender = process.env.SMTP_USER || 'no-reply@kavishkalk.com';
+    const recipientName = customerName || 'Valued Customer';
+    const invoiceNumber = `INV-${String(invoice.id).padStart(4, '0')}`;
+    const formattedDate = new Date(invoice.issued_at || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+
+    const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Invoice ${invoiceNumber} - KavishkaLK Laptop Care</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f5f7; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.06); border: 1px solid #eaecef; }
+        .header { background: #0f172a; padding: 24px 32px; color: #ffffff; }
+        .header-title { font-size: 20px; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: -0.5px; }
+        .header-sub { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .badge-status { background: #10b981; color: #ffffff; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+        .badge-unpaid { background: #f59e0b; color: #ffffff; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; }
+        .content { padding: 32px; color: #334155; line-height: 1.6; }
+        .greeting { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+        .intro { font-size: 14px; color: #64748b; margin-bottom: 24px; }
+        .meta-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; }
+        .table-invoice { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+        .table-invoice th { text-align: left; padding: 10px 12px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; border-bottom: 2px solid #e2e8f0; }
+        .table-invoice td { padding: 12px; font-size: 14px; border-bottom: 1px solid #f1f5f9; color: #1e293b; }
+        .total-box { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px 20px; margin-bottom: 24px; text-align: right; }
+        .total-label { font-size: 14px; font-weight: 600; color: #166534; }
+        .total-val { font-size: 24px; font-weight: 800; color: #15803d; }
+        .footer { background: #f8fafc; padding: 20px 32px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <table width="100%" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td>
+                <div class="header-title">KavishkaLK Laptop Care</div>
+                <div class="header-sub">Laptop Repair &amp; Service Management</div>
+              </td>
+              <td align="right">
+                <span class="${invoice.payment_status === 'paid' ? 'badge-status' : 'badge-unpaid'}">
+                  ${(invoice.payment_status || 'unpaid').toUpperCase()}
+                </span>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div class="content">
+          <div class="greeting">Dear ${recipientName},</div>
+          <p class="intro">
+            Here is your official repair invoice <strong>${invoiceNumber}</strong> for the service completed on your laptop (Job #${invoice.job_id}).
+          </p>
+
+          <div class="meta-box">
+            <table width="100%" border="0" cellpadding="4" cellspacing="0" style="font-size: 13px;">
+              <tr>
+                <td style="color: #64748b; font-weight: 500;">Invoice Date:</td>
+                <td align="right" style="color: #0f172a; font-weight: 600;">${formattedDate}</td>
+              </tr>
+              <tr>
+                <td style="color: #64748b; font-weight: 500;">Device:</td>
+                <td align="right" style="color: #0f172a; font-weight: 600;">${invoice.device_name || job?.device_name || 'Laptop'}</td>
+              </tr>
+              <tr>
+                <td style="color: #64748b; font-weight: 500;">Service Issue:</td>
+                <td align="right" style="color: #0f172a;">${invoice.job_description || job?.problem_description || 'General Service &amp; Repair'}</td>
+              </tr>
+            </table>
+          </div>
+
+          <table class="table-invoice">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th style="text-align: right;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Laptop Labor &amp; Service Charge</td>
+                <td style="text-align: right; font-weight: 600;">$${Number(invoice.labor_total || 0).toFixed(2)}</td>
+              </tr>
+              ${Number(invoice.parts_total || 0) > 0 ? `
+              <tr>
+                <td>Replacement Parts &amp; Hardware</td>
+                <td style="text-align: right; font-weight: 600;">$${Number(invoice.parts_total).toFixed(2)}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="color: #64748b;">Tax (${(Number(invoice.tax_rate || 0.10) * 100).toFixed(0)}%)</td>
+                <td style="text-align: right; color: #64748b;">$${Number(invoice.tax_amount || 0).toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="total-box">
+            <div class="total-label">Total Amount</div>
+            <div class="total-val">$${Number(invoice.total_amount || 0).toFixed(2)}</div>
+          </div>
+
+          ${invoice.notes ? `
+          <div style="background: #f8fafc; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 4px; font-size: 13px; color: #475569; margin-bottom: 24px;">
+            <strong>Notes:</strong> ${invoice.notes}
+          </div>
+          ` : ''}
+
+          <p style="font-size: 13px; color: #64748b; margin: 0;">
+            Thank you for choosing <strong>KavishkaLK Laptop Care</strong> for your repair services. Please contact us if you have any questions regarding your invoice.
+          </p>
+        </div>
+        <div class="footer">
+          &copy; ${new Date().getFullYear()} KavishkaLK Laptop Care &bull; All Rights Reserved
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const plainText = `Dear ${recipientName},\n\nHere is your repair invoice ${invoiceNumber} for your ${invoice.device_name || 'device'}:\nTotal Amount: $${Number(invoice.total_amount || 0).toFixed(2)}\nPayment Status: ${invoice.payment_status || 'unpaid'}\n\nThank you for choosing KavishkaLK Laptop Care!`;
+
+    try {
+        const mailClient = getTransporter();
+        const info = await mailClient.sendMail({
+            from: `"KavishkaLK Laptop Care" <${sender}>`,
+            to,
+            subject: `🧾 Invoice ${invoiceNumber}: ${invoice.device_name || 'Laptop'} Repair ($${Number(invoice.total_amount || 0).toFixed(2)})`,
+            text: plainText,
+            html: htmlContent,
+        });
+        logger.info(`Customer invoice email sent to ${to} for Invoice #${invoice.id} (MessageId: ${info.messageId})`);
+        return { success: true, messageId: info.messageId };
+    } catch (error) {
+        logger.error(`Failed to send customer invoice email to ${to} for Invoice #${invoice.id}: ${error.message}`);
+        return { success: false, error: error.message };
+    }
+}
+
 module.exports = {
     sendPasswordResetEmail,
     sendJobAssignedEmail,
@@ -801,5 +945,6 @@ module.exports = {
     sendJobCompletedCustomerEmail,
     sendJobRejectedTechnicianEmail,
     sendJobPendingVerificationAdminEmail,
+    sendCustomerInvoiceEmail,
 };
 

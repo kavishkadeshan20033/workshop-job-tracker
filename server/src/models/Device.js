@@ -41,7 +41,7 @@ const DeviceModel = {
              serial_number = COALESCE(?, serial_number),
              device_type = COALESCE(?, device_type)
              WHERE id = ?`,
-            [customer_id, brand, model, year, serial_number, device_type, id]
+            [customer_id || null, brand || null, model || null, year || null, serial_number || null, device_type || null, id]
         );
         return this.findById(id);
     },

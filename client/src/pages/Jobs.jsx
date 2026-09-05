@@ -55,6 +55,8 @@ export default function Jobs() {
     const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
     const [verifyAction, setVerifyAction] = useState('approve'); // 'approve' | 'reject'
     const [verifyNote, setVerifyNote] = useState('');
+    const [verifyPrice, setVerifyPrice] = useState('');
+    const [verifyTaxRate, setVerifyTaxRate] = useState('0.10');
     const [isVerifying, setIsVerifying] = useState(false);
 
     // Selected Job for View Modal
@@ -153,6 +155,8 @@ export default function Jobs() {
     const openVerifyModal = (action) => {
         setVerifyAction(action);
         setVerifyNote('');
+        setVerifyPrice(selectedJob?.estimated_cost ? String(selectedJob.estimated_cost) : '');
+        setVerifyTaxRate('0.10');
         setIsVerifyModalOpen(true);
     };
 
@@ -160,12 +164,17 @@ export default function Jobs() {
         if (!selectedJob) return;
         setIsVerifying(true);
         try {
-            await jobAPI.verifyJob(selectedJob.id, verifyAction, verifyNote || undefined);
+            const extra = verifyAction === 'approve' ? {
+                service_price: verifyPrice ? parseFloat(verifyPrice) : 0,
+                tax_rate: verifyTaxRate ? parseFloat(verifyTaxRate) : 0.10,
+            } : {};
+
+            await jobAPI.verifyJob(selectedJob.id, verifyAction, verifyNote || undefined, extra);
             if (verifyAction === 'approve') {
-                toast.success('✅ Job verified & completed! Notification emails sent.');
+                toast.success('✅ Job verified & completed! Invoice generated with pricing.');
                 setSelectedJob({ ...selectedJob, status: 'completed' });
             } else {
-                toast.success('↩ Job sent back to In Progress! Notification email sent to technician.');
+                toast.success('↩ Job sent back to In Progress! Notification email sent.');
                 setSelectedJob({ ...selectedJob, status: 'in_progress' });
             }
             setIsVerifyModalOpen(false);
@@ -337,6 +346,10 @@ export default function Jobs() {
                     <div className="form-group">
                         <label className="form-label">Problem Description</label>
                         <textarea name="problem_description" className="form-input" rows="3" required></textarea>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Estimated Service Cost ($)</label>
+                        <input type="number" step="0.01" name="estimated_cost" className="form-input" placeholder="e.g. 75.00 (Optional initial estimate)" />
                     </div>
                     <div className="form-group">
                         <label className="form-label">Assign Technician (Optional)</label>
@@ -657,12 +670,45 @@ export default function Jobs() {
                         </div>
                     )}
 
+                    {verifyAction === 'approve' && (
+                        <div className="grid grid-2 gap-md mb-md">
+                            <div className="form-group mb-0">
+                                <label className="form-label text-xs">Full Service / Repair Fee ($) *</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01" 
+                                    className="form-input" 
+                                    placeholder="0.00" 
+                                    value={verifyPrice} 
+                                    onChange={(e) => setVerifyPrice(e.target.value)} 
+                                />
+                                <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
+                                    Labor / service charge billed on invoice.
+                                </small>
+                            </div>
+                            <div className="form-group mb-0">
+                                <label className="form-label text-xs">Tax Rate (e.g. 0.10 = 10%)</label>
+                                <input 
+                                    type="number" 
+                                    step="0.01" 
+                                    className="form-input" 
+                                    placeholder="0.10" 
+                                    value={verifyTaxRate} 
+                                    onChange={(e) => setVerifyTaxRate(e.target.value)} 
+                                />
+                                <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
+                                    Standard workshop sales tax.
+                                </small>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="form-group">
                         <label className="form-label">{verifyAction === 'approve' ? 'Approval Note (optional)' : 'Rejection Reason (optional)'}</label>
                         <textarea
                             className="form-input"
-                            rows="3"
-                            placeholder={verifyAction === 'approve' ? 'e.g. Quality checked, all parts installed correctly.' : 'e.g. Screen replacement not aligned properly.'}
+                            rows="2"
+                            placeholder={verifyAction === 'approve' ? 'e.g. Diagnostic complete, screen replaced and tested.' : 'e.g. Screen replacement not aligned properly.'}
                             value={verifyNote}
                             onChange={(e) => setVerifyNote(e.target.value)}
                         />

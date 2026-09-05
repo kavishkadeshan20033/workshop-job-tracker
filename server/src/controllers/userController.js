@@ -73,7 +73,12 @@ const userController = {
             await UserModel.delete(req.params.id);
             await AuditModel.log({ user_id: req.user.id, action: 'DELETE', entity: 'users', entity_id: parseInt(req.params.id), ip_address: req.ip });
             res.json({ message: 'User deleted successfully' });
-        } catch (error) { next(error); }
+        } catch (error) {
+            if (error.code === 'ER_ROW_IS_REFERENCED_2' || error.errno === 1451) {
+                return res.status(400).json({ error: 'Cannot delete this user because they have recorded jobs or audit entries. Deactivate the user account instead.' });
+            }
+            next(error);
+        }
     }
 };
 

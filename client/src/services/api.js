@@ -74,7 +74,7 @@ export const jobAPI = {
     update: (id, data) => api.put(`/jobs/${id}`, data),
     updateStatus: (id, status) => api.patch(`/jobs/${id}/status`, { status }),
     markDone: (id) => api.patch(`/jobs/${id}/status`, { status: 'done_pending_verification' }),
-    verifyJob: (id, action, note) => api.patch(`/jobs/${id}/verify`, { action, note }),
+    verifyJob: (id, action, note, extra = {}) => api.patch(`/jobs/${id}/verify`, { action, note, ...extra }),
     delete: (id) => api.delete(`/jobs/${id}`),
     getStats: () => api.get('/jobs/stats'),
     
@@ -103,6 +103,7 @@ export const invoiceAPI = {
     create: (data) => api.post('/invoices', data),
     update: (id, data) => api.put(`/invoices/${id}`, data),
     delete: (id) => api.delete(`/invoices/${id}`),
+    sendEmail: (id, email) => api.post(`/invoices/${id}/send-email`, { email }),
 };
 
 // Reports

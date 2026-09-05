@@ -180,22 +180,22 @@ export default function Login() {
             {/* Left — Dark hero panel */}
             <div className="login-left">
                 <div className="login-brand">
-                    <img src="/logo.png" alt="WorkshopTracker" className="login-brand-img" />
+                    <img src="/logo.png" alt="KavishkaLK" className="login-brand-img" />
                     <div>
-                        <div className="login-brand-name">WorkshopTracker</div>
-                        <div className="login-brand-tag">Job Management System</div>
+                        <div className="login-brand-name">KavishkaLK</div>
+                        <div className="login-brand-tag">Laptop Repair & Service Management</div>
                     </div>
                 </div>
 
                 <h1 className="login-hero-title">
                     Manage your<br />
-                    <span>workshop</span><br />
+                    <span>laptop service</span><br />
                     with ease.
                 </h1>
 
                 <p className="login-hero-desc">
-                    A complete job tracking solution for repair workshops.
-                    Track jobs, manage inventory, generate invoices, and grow your business.
+                    A complete repair tracking solution for laptop service workshops.
+                    Track repairs, manage parts inventory, generate invoices, and grow your business.
                 </p>
 
                 <div className="login-stats">
@@ -546,7 +546,7 @@ export default function Login() {
                     color: 'var(--text-light)',
                     textAlign: 'center'
                 }}>
-                    © {new Date().getFullYear()} WorkshopTracker. All rights reserved.
+                    © {new Date().getFullYear()} KavishkaLK. All rights reserved.
                 </div>
             </div>
         </div>

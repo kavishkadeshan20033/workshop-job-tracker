@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { jobAPI, customerAPI, technicianAPI, deviceAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle, HiBadgeCheck, HiXCircle, HiClipboardCheck } from 'react-icons/hi';
+import { HiPlus, HiSearch, HiOutlineDocumentText, HiChatAlt2, HiTrash, HiCheckCircle, HiBadgeCheck, HiXCircle, HiClipboardCheck, HiClock, HiUser, HiPhone } from 'react-icons/hi';
 import Modal from '../components/Modal';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
@@ -354,33 +354,70 @@ export default function Jobs() {
 
             {/* VIEW/EDIT JOB MODAL */}
             {selectedJob && (
-                <Modal isOpen={isViewModalOpen} onClose={() => setIsViewModalOpen(false)} title={`Job #${selectedJob.id} Details`} size="large">
-                    <div className="grid" style={{ gridTemplateColumns: '2fr 1fr', gap: 'var(--spacing-lg)' }}>
+                <Modal 
+                    isOpen={isViewModalOpen} 
+                    onClose={() => setIsViewModalOpen(false)} 
+                    title={`Job #${selectedJob.id} Details`} 
+                    size="large"
+                >
+                    {/* TOP SUMMARY BAR */}
+                    <div className="flex justify-between items-center pb-md mb-lg" style={{ borderBottom: '1px solid var(--border-light)' }}>
+                        <div className="flex items-center gap-md flex-wrap">
+                            <h3 className="font-bold text-xl m-0 text-primary">{selectedJob.device_name}</h3>
+                            <span className={`badge ${STATUS_COLORS[selectedJob.status]}`} style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+                                {selectedJob.status === 'done_pending_verification' && <HiClock className="mr-xs" />}
+                                {STATUS_LABELS[selectedJob.status]}
+                            </span>
+                        </div>
+                        <div className="text-xs text-muted flex items-center gap-sm">
+                            <span><strong>Received:</strong> {formatDateSafe(selectedJob.created_at)}</span>
+                        </div>
+                    </div>
+
+                    {/* MAIN TWO-COLUMN GRID */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(0, 1fr)', gap: 'var(--spacing-lg)', alignItems: 'start' }}>
                         
                         {/* LEFT COLUMN: Details & Notes */}
-                        <div>
-                            <div className="card p-md mb-md" style={{ background: 'var(--bg-tertiary)' }}>
-                                <div className="flex justify-between items-start mb-sm">
-                                    <h3 className="font-semibold text-primary">{selectedJob.device_name}</h3>
-                                    <span className={`badge ${STATUS_COLORS[selectedJob.status]}`}>
-                                        {selectedJob.status === 'done_pending_verification' && '⏳ '}
-                                        {STATUS_LABELS[selectedJob.status]}
-                                    </span>
-                                </div>
-                                <p className="text-muted mb-sm">{selectedJob.problem_description}</p>
-                                
-                                <div className="grid grid-2 gap-md mt-md">
-                                    <div>
-                                        <small className="text-muted block">Customer</small>
-                                        <span className="font-semibold">{selectedJob.customer_name}</span>
-                                        <div className="text-sm">{selectedJob.customer_phone}</div>
+                        <div className="flex flex-col gap-md" style={{ minWidth: 0 }}>
+                            {/* Device Issue & Customer / Technician Information */}
+                            <div className="card p-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)' }}>
+                                <div className="mb-md">
+                                    <span className="text-xs font-bold uppercase tracking-wider text-muted block mb-xs">Reported Issue / Fault</span>
+                                    <div style={{ 
+                                        background: 'var(--white)', 
+                                        border: '1px solid var(--border-light)', 
+                                        borderRadius: '8px', 
+                                        padding: '10px 14px', 
+                                        fontSize: '0.9rem',
+                                        color: 'var(--text-body)',
+                                        lineHeight: 1.5,
+                                        wordBreak: 'break-word'
+                                    }}>
+                                        {selectedJob.problem_description || <em className="text-muted">No problem description provided.</em>}
                                     </div>
+                                </div>
+
+                                <div className="grid grid-2 gap-md pt-sm" style={{ borderTop: '1px solid var(--border-light)' }}>
                                     <div>
-                                        <small className="text-muted block">Technician</small>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-muted block mb-xs">Customer</span>
+                                        <div className="flex items-center gap-xs font-semibold text-sm">
+                                            <HiUser className="text-muted flex-shrink-0" />
+                                            <span className="truncate">{selectedJob.customer_name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-xs text-xs text-muted mt-xs">
+                                            <HiPhone className="text-muted flex-shrink-0" />
+                                            <a href={`tel:${selectedJob.customer_phone}`} className="text-muted hover:underline">
+                                                {selectedJob.customer_phone}
+                                            </a>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <span className="text-xs font-bold uppercase tracking-wider text-muted block mb-xs">Assigned Technician</span>
                                         {isAdmin ? (
                                             <select
-                                                className="form-input text-sm"
-                                                style={{ marginTop: '4px', padding: '4px 8px' }}
+                                                className="form-input text-sm w-full"
+                                                style={{ padding: '6px 10px', height: '36px' }}
                                                 value={selectedJob.technician_id || ''}
                                                 onChange={(e) => handleAssignTechnician(selectedJob.id, e.target.value)}
                                             >
@@ -392,146 +429,201 @@ export default function Jobs() {
                                                 ))}
                                             </select>
                                         ) : (
-                                            <span className="font-semibold">{selectedJob.technician_name || 'Unassigned'}</span>
+                                            <div className="flex items-center gap-xs font-semibold text-sm" style={{ height: '36px' }}>
+                                                <HiUser className="text-muted flex-shrink-0" />
+                                                <span>{selectedJob.technician_name || 'Unassigned'}</span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* NOTES SECTION */}
-                            <h4 className="font-semibold mb-sm flex items-center gap-sm">
-                                <HiChatAlt2 className="text-primary" /> Job Notes
-                            </h4>
-                            <div className="card p-md mb-md" style={{ background: 'var(--bg-tertiary)' }}>
+                            {/* Job Notes Section */}
+                            <div className="card p-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)' }}>
+                                <div className="flex justify-between items-center mb-sm">
+                                    <h4 className="font-bold text-sm flex items-center gap-xs m-0">
+                                        <HiChatAlt2 className="text-primary" /> Job Activity & Notes
+                                    </h4>
+                                    <span className="badge badge-info" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                                        {selectedJob.notes?.length || 0}
+                                    </span>
+                                </div>
+
+                                {/* Notes Stream */}
                                 {selectedJob.notes && selectedJob.notes.length > 0 ? (
-                                    <div className="flex flex-col gap-sm mb-md">
+                                    <div className="flex flex-col gap-xs mb-md" style={{ maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }}>
                                         {selectedJob.notes.map(note => (
-                                            <div key={note.id} style={{ background: 'var(--bg-secondary)', padding: '10px', borderRadius: '8px' }}>
+                                            <div key={note.id} style={{ 
+                                                background: 'var(--white)', 
+                                                padding: '8px 12px', 
+                                                borderRadius: '8px', 
+                                                border: '1px solid var(--border-light)' 
+                                            }}>
                                                 <div className="flex justify-between items-center mb-xs">
-                                                    <span className="font-semibold text-sm text-primary">{note.author_name}</span>
+                                                    <span className="font-bold text-xs text-primary">{note.author_name}</span>
                                                     <span className="text-xs text-muted">{formatDateSafe(note.created_at, 'MMM dd, HH:mm')}</span>
                                                 </div>
-                                                <p className="text-sm m-0">{note.description}</p>
+                                                <p className="text-sm m-0" style={{ wordBreak: 'break-word', color: 'var(--text-body)' }}>{note.description}</p>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <p className="text-muted text-sm text-center italic mb-md">No notes added yet.</p>
+                                    <div className="text-center py-md mb-sm" style={{ background: 'var(--white)', borderRadius: '8px', border: '1px dashed var(--border-medium)' }}>
+                                        <p className="text-muted text-xs m-0 italic">No notes logged yet.</p>
+                                    </div>
                                 )}
 
-                                <form onSubmit={handleAddNote} className="flex gap-sm">
+                                {/* Add Note Input Form */}
+                                <form onSubmit={handleAddNote} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                                     <input 
                                         type="text" 
                                         className="form-input flex-1" 
-                                        placeholder="Type a new note..."
+                                        style={{ minWidth: 0, height: '38px', fontSize: '0.88rem' }}
+                                        placeholder="Add a progress update or note..."
                                         value={noteDescription}
                                         onChange={(e) => setNoteDescription(e.target.value)}
                                     />
-                                    <button type="submit" className="btn btn-primary" disabled={!noteDescription.trim()}>Add Note</button>
+                                    <button 
+                                        type="submit" 
+                                        className="btn btn-primary" 
+                                        style={{ height: '38px', padding: '0 16px', whiteSpace: 'nowrap', flexShrink: 0 }}
+                                        disabled={!noteDescription.trim()}
+                                    >
+                                        Add Note
+                                    </button>
                                 </form>
                             </div>
                         </div>
 
                         {/* RIGHT COLUMN: Actions & Status */}
-                        <div>
+                        <div className="flex flex-col gap-md" style={{ minWidth: 0 }}>
 
-                            {/* ===== ADMIN: VERIFICATION SECTION (always visible) ===== */}
+                            {/* ===== ADMIN: VERIFICATION SECTION ===== */}
                             {isAdmin && (
-                                <div className={`verify-banner mb-md ${isPendingVerification ? 'verify-banner-active' : isCompleted ? 'verify-banner-inactive' : ''}`}>
-                                    <div className="verify-banner-icon">
-                                        <HiClipboardCheck />
-                                    </div>
-                                    <div className="verify-banner-content">
-                                        {isPendingVerification ? (
-                                            <>
-                                                <div className="font-semibold mb-xs" style={{ color: '#92400e' }}>⏳ Job Marked as Done — Needs Review</div>
-                                                <p className="text-sm m-0 mb-md" style={{ color: '#78350f' }}>The technician has completed this job. Please review and take action.</p>
-                                            </>
-                                        ) : isCompleted ? (
-                                            <>
-                                                <div className="font-semibold mb-xs" style={{ color: '#065f46' }}>✅ Job Verified &amp; Completed</div>
-                                                <p className="text-sm m-0 mb-md" style={{ color: '#047857' }}>This repair has already been verified and closed.</p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <div className="font-semibold mb-xs" style={{ color: 'var(--text-primary)' }}>Job Verification &amp; Completion</div>
-                                                <p className="text-sm m-0 mb-md text-muted">You can verify &amp; finish this job, or reject and send it back for further work.</p>
-                                            </>
-                                        )}
-                                        <div className="flex gap-sm flex-col">
-                                            <button
-                                                id="verify-approve-btn"
-                                                className="btn btn-verify-approve w-full"
-                                                disabled={isCompleted}
-                                                onClick={() => openVerifyModal('approve')}
-                                                title={isCompleted ? 'Job is already completed' : ''}
-                                            >
-                                                <HiBadgeCheck className="mr-sm" /> Verify &amp; Finish Job
-                                            </button>
-                                            <button
-                                                id="verify-reject-btn"
-                                                className="btn btn-verify-reject w-full"
-                                                disabled={isCompleted}
-                                                onClick={() => openVerifyModal('reject')}
-                                                title={isCompleted ? 'Job is already completed' : ''}
-                                            >
-                                                <HiXCircle className="mr-sm" /> Reject — Send Back
-                                            </button>
+                                <div className={`verify-banner ${isPendingVerification ? 'verify-banner-active' : isCompleted ? 'verify-banner-inactive' : ''}`}>
+                                    <div className="verify-banner-header">
+                                        <div className="verify-banner-icon">
+                                            {isPendingVerification ? <HiClock /> : isCompleted ? <HiCheckCircle style={{ color: '#059669' }} /> : <HiClipboardCheck />}
+                                        </div>
+                                        <div className="font-bold text-sm" style={{ color: isPendingVerification ? '#92400e' : isCompleted ? '#065f46' : 'var(--text-dark)' }}>
+                                            {isPendingVerification 
+                                                ? 'Completion Review Required' 
+                                                : isCompleted 
+                                                ? 'Job Verified & Completed' 
+                                                : 'Verification & Final Sign-Off'}
                                         </div>
                                     </div>
-                                </div>
-                            )}
 
-                            {/* ===== EMPLOYEE: MARK AS DONE BUTTON ===== */}
-                            {!isAdmin && isActiveJob && (
-                                <div className="mark-done-card mb-md">
-                                    <HiClipboardCheck className="mark-done-icon" />
-                                    <div className="font-semibold mb-xs">Finished the repair?</div>
-                                    <p className="text-sm text-muted m-0 mb-md">Mark this job as done and it will be sent to the admin for verification.</p>
-                                    <button
-                                        id="mark-done-btn"
-                                        className="btn btn-mark-done w-full"
-                                        onClick={handleMarkDone}
-                                    >
-                                        <HiCheckCircle className="mr-sm" /> Mark as Done
-                                    </button>
-                                </div>
-                            )}
+                                    <p className="text-xs m-0 text-muted" style={{ lineHeight: 1.4 }}>
+                                        {isPendingVerification 
+                                            ? 'Technician marked this repair as done. Please review the work and either verify to finalize, or reject and send back.' 
+                                            : isCompleted 
+                                            ? 'This repair has been inspected and completed. The job is closed.' 
+                                            : 'When the technician marks this repair as complete, you can review and verify it here.'}
+                                    </p>
 
-                            {/* ===== EMPLOYEE: PENDING STATE INFO ===== */}
-                            {!isAdmin && isPendingVerification && (
-                                <div className="pending-info-card mb-md">
-                                    <div className="text-center">
-                                        <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-                                        <div className="font-semibold mb-xs">Waiting for Admin</div>
-                                        <p className="text-sm text-muted m-0">Your completion request has been submitted. The admin will review and verify this job.</p>
+                                    <div className="flex flex-col gap-xs mt-xs">
+                                        <button
+                                            id="verify-approve-btn"
+                                            className="btn btn-verify-approve w-full"
+                                            disabled={isCompleted}
+                                            onClick={() => openVerifyModal('approve')}
+                                            title={isCompleted ? 'Job is already completed' : ''}
+                                        >
+                                            <HiBadgeCheck className="text-lg" /> Verify &amp; Finish Job
+                                        </button>
+                                        <button
+                                            id="verify-reject-btn"
+                                            className="btn btn-verify-reject w-full"
+                                            disabled={isCompleted}
+                                            onClick={() => openVerifyModal('reject')}
+                                            title={isCompleted ? 'Job is already completed' : ''}
+                                        >
+                                            <HiXCircle className="text-lg" /> Reject — Send Back
+                                        </button>
                                     </div>
                                 </div>
                             )}
 
-                            {/* ===== ADMIN: FULL STATUS PICKER (always visible for admin) ===== */}
-                            {isAdmin && (
-                                <div className="card p-md mb-md" style={{ background: 'var(--bg-tertiary)' }}>
-                                    <h4 className="font-semibold mb-md">Update Status</h4>
-                                    <div className="flex flex-col gap-sm">
-                                        {Object.entries(STATUS_LABELS).map(([val, label]) => (
-                                            <button 
-                                                key={val}
-                                                className={`btn ${selectedJob.status === val ? 'btn-primary' : 'btn-secondary'} w-full text-left`}
-                                                onClick={() => handleStatusChange(selectedJob.id, val)}
+                            {/* ===== EMPLOYEE: ACTIONS & STATUS ===== */}
+                            {!isAdmin && (
+                                <>
+                                    {/* Active state: can mark as done */}
+                                    {isActiveJob && (
+                                        <div className="mark-done-card">
+                                            <HiClipboardCheck className="mark-done-icon" />
+                                            <div className="font-bold text-sm mb-xs">Finished the repair?</div>
+                                            <p className="text-xs text-muted m-0 mb-md">
+                                                Mark this job as done and it will be sent to the workshop administrator for verification.
+                                            </p>
+                                            <button
+                                                id="mark-done-btn"
+                                                className="btn btn-mark-done w-full"
+                                                onClick={handleMarkDone}
                                             >
-                                                {selectedJob.status === val && <HiCheckCircle className="mr-sm" />}
-                                                {val === 'done_pending_verification' ? '⏳ ' : ''}
-                                                {label}
+                                                <HiCheckCircle className="text-lg" /> Mark as Done
                                             </button>
+                                        </div>
+                                    )}
+
+                                    {/* Pending verification: clean, calm waiting card */}
+                                    {isPendingVerification && (
+                                        <div className="pending-info-card">
+                                            <div className="pending-info-icon-badge">
+                                                <HiClock />
+                                            </div>
+                                            <div className="font-bold text-sm mb-xs" style={{ color: '#92400e' }}>
+                                                Waiting for Admin Review
+                                            </div>
+                                            <p className="text-xs m-0" style={{ color: '#78350f', lineHeight: 1.4 }}>
+                                                Your completion request has been submitted. The administrator will inspect and verify this job.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Completed state */}
+                                    {isCompleted && (
+                                        <div className="card p-md text-center" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                                            <HiBadgeCheck style={{ fontSize: '2rem', color: '#16a34a', margin: '0 auto 6px' }} />
+                                            <div className="font-bold text-sm" style={{ color: '#166534' }}>Job Completed</div>
+                                            <p className="text-xs text-muted m-0 mt-xs">This job has been verified and closed.</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* ===== ADMIN: COMPACT STATUS SELECTOR ===== */}
+                            {isAdmin && (
+                                <div className="card p-md" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-light)' }}>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-muted block mb-xs">
+                                        Change Status
+                                    </label>
+                                    <select 
+                                        className="form-input text-sm w-full font-semibold"
+                                        style={{ height: '38px', padding: '6px 12px' }}
+                                        value={selectedJob.status}
+                                        onChange={(e) => handleStatusChange(selectedJob.id, e.target.value)}
+                                    >
+                                        {Object.entries(STATUS_LABELS).map(([val, label]) => (
+                                            <option key={val} value={val}>
+                                                {val === 'done_pending_verification' ? '⏳ ' : ''}{label}
+                                            </option>
                                         ))}
-                                    </div>
+                                    </select>
+                                    <small className="text-muted block mt-xs" style={{ fontSize: '11px' }}>
+                                        Direct status override for workshop tracking.
+                                    </small>
                                 </div>
                             )}
                             
+                            {/* ===== ADMIN: DELETE ACTION ===== */}
                             {isAdmin && (
-                                <button className="btn btn-danger w-full mt-auto" onClick={() => handleDeleteJob(selectedJob.id)}>
-                                    <HiTrash className="mr-sm" /> Delete Job
+                                <button 
+                                    className="btn btn-danger w-full" 
+                                    style={{ height: '36px', fontSize: '0.85rem' }} 
+                                    onClick={() => handleDeleteJob(selectedJob.id)}
+                                >
+                                    <HiTrash className="mr-xs" /> Delete Job
                                 </button>
                             )}
                         </div>
@@ -544,7 +636,7 @@ export default function Jobs() {
             <Modal
                 isOpen={isVerifyModalOpen}
                 onClose={() => setIsVerifyModalOpen(false)}
-                title={verifyAction === 'approve' ? '✅ Verify & Complete Job' : '↩ Reject Job'}
+                title={verifyAction === 'approve' ? 'Verify & Complete Job' : 'Reject Job Completion'}
             >
                 <div>
                     {verifyAction === 'approve' ? (
@@ -585,7 +677,7 @@ export default function Jobs() {
                             onClick={handleVerifyJob}
                             disabled={isVerifying}
                         >
-                            {isVerifying ? 'Processing...' : verifyAction === 'approve' ? '✅ Confirm & Complete' : '↩ Confirm Rejection'}
+                            {isVerifying ? 'Processing...' : verifyAction === 'approve' ? 'Confirm & Complete' : 'Confirm Rejection'}
                         </button>
                     </div>
                 </div>

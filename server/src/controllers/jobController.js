@@ -1,6 +1,8 @@
 const JobModel = require('../models/Job');
 const JobNoteModel = require('../models/JobNote');
 const AuditModel = require('../models/Audit');
+const { sendJobAssignedEmail, sendJobCreatedCustomerEmail } = require('../utils/email');
+const logger = require('../middleware/logger');
 
 const jobController = {
     async getAll(req, res, next) {
@@ -28,9 +30,40 @@ const jobController = {
             const jobData = { ...req.body, created_by: req.user.id };
             const job = await JobModel.create(jobData);
             
-
             await AuditModel.log({ user_id: req.user.id, action: 'CREATE', entity: 'jobs', entity_id: job.id, ip_address: req.ip });
-            res.status(201).json(job);
+
+            // Fetch complete job record with customer and technician details
+            const fullJob = await JobModel.findById(job.id);
+
+            // Asynchronously dispatch email notifications (non-blocking)
+            (async () => {
+                try {
+                    // 1. Notify assigned technician
+                    if (fullJob?.technician_email) {
+                        logger.info(`Notifying technician ${fullJob.technician_name} (${fullJob.technician_email}) for Job #${job.id}`);
+                        await sendJobAssignedEmail({
+                            to: fullJob.technician_email,
+                            technicianName: fullJob.technician_name || 'Technician',
+                            job: fullJob,
+                            assignedBy: req.user.username || 'Admin'
+                        });
+                    }
+
+                    // 2. Notify customer (if email provided)
+                    if (fullJob?.customer_email) {
+                        logger.info(`Notifying customer ${fullJob.customer_name} (${fullJob.customer_email}) for Job #${job.id}`);
+                        await sendJobCreatedCustomerEmail({
+                            to: fullJob.customer_email,
+                            customerName: fullJob.customer_name || 'Valued Customer',
+                            job: fullJob
+                        });
+                    }
+                } catch (emailErr) {
+                    logger.error(`Error sending email notifications for Job #${job.id}: ${emailErr.message}`);
+                }
+            })();
+
+            res.status(201).json(fullJob || job);
         } catch (error) { next(error); }
     },
 
@@ -41,8 +74,31 @@ const jobController = {
             
             const job = await JobModel.update(req.params.id, req.body);
             
-
             await AuditModel.log({ user_id: req.user.id, action: 'UPDATE', entity: 'jobs', entity_id: job.id, ip_address: req.ip });
+
+            // Check if technician assignment changed
+            const isTechnicianReassigned = req.body.technician_id && 
+                parseInt(req.body.technician_id) !== existing.technician_id;
+
+            if (isTechnicianReassigned) {
+                const fullJob = await JobModel.findById(job.id);
+                if (fullJob?.technician_email) {
+                    (async () => {
+                        try {
+                            logger.info(`Notifying reassigned technician ${fullJob.technician_name} (${fullJob.technician_email}) for Job #${job.id}`);
+                            await sendJobAssignedEmail({
+                                to: fullJob.technician_email,
+                                technicianName: fullJob.technician_name || 'Technician',
+                                job: fullJob,
+                                assignedBy: req.user.username || 'Admin'
+                            });
+                        } catch (emailErr) {
+                            logger.error(`Error sending reassignment email for Job #${job.id}: ${emailErr.message}`);
+                        }
+                    })();
+                }
+            }
+
             res.json(job);
         } catch (error) { next(error); }
     },

@@ -150,6 +150,34 @@ router.get('/profile', authenticate, authController.getProfile);
 
 /**
  * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     summary: Change current user's password
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [currentPassword, newPassword]
+ *             properties:
+ *               currentPassword: { type: string }
+ *               newPassword: { type: string, minLength: 6 }
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ */
+router.post('/change-password', authenticate, [
+    body('currentPassword').notEmpty().withMessage('Current password is required'),
+    body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters long'),
+    validate,
+], authController.changePassword);
+
+/**
+ * @swagger
  * /api/auth/users:
  *   get:
  *     summary: Get all users (admin only)

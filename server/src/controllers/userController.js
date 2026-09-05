@@ -34,11 +34,31 @@ const userController = {
             if (!existing) return res.status(404).json({ error: 'User not found' });
             
             const updateData = { ...req.body };
-            delete updateData.password;
+            if (!updateData.password || !updateData.password.trim()) {
+                delete updateData.password;
+            } else if (updateData.password.length < 6) {
+                return res.status(400).json({ error: 'Password must be at least 6 characters' });
+            }
 
             const user = await UserModel.update(req.params.id, updateData);
             await AuditModel.log({ user_id: req.user.id, action: 'UPDATE', entity: 'users', entity_id: user.id, ip_address: req.ip });
             res.json(user);
+        } catch (error) { next(error); }
+    },
+
+    async changePassword(req, res, next) {
+        try {
+            const { password } = req.body;
+            if (!password || password.length < 6) {
+                return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+            }
+
+            const existing = await UserModel.findById(req.params.id);
+            if (!existing) return res.status(404).json({ error: 'User not found' });
+
+            await UserModel.update(req.params.id, { password });
+            await AuditModel.log({ user_id: req.user.id, action: 'ADMIN_CHANGE_PASSWORD', entity: 'users', entity_id: parseInt(req.params.id), ip_address: req.ip });
+            res.json({ message: `Password for ${existing.username} has been updated successfully` });
         } catch (error) { next(error); }
     },
 

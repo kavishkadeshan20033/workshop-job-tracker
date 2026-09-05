@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { userAPI } from '../services/api';
 import toast from 'react-hot-toast';
-import { HiPlus, HiPencil, HiTrash, HiSearch, HiX, HiShieldCheck } from 'react-icons/hi';
+import { HiPlus, HiPencil, HiTrash, HiSearch, HiX, HiShieldCheck, HiKey } from 'react-icons/hi';
 import Modal from '../components/Modal';
+import ChangePasswordModal from '../components/ChangePasswordModal';
 
 export default function Users() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [passwordTargetUser, setPasswordTargetUser] = useState(null);
 
     const fetchUsers = async () => {
         try {
@@ -34,7 +37,9 @@ export default function Users() {
         try {
             if (editingUser) {
                 // If editing and password is empty, remove it so it's not updated
-                if (!data.password) delete data.password;
+                if (!data.password || !data.password.trim()) {
+                    delete data.password;
+                }
                 await userAPI.update(editingUser.id, data);
                 toast.success('User updated successfully');
             } else {
@@ -63,6 +68,11 @@ export default function Users() {
     const openModal = (user = null) => {
         setEditingUser(user);
         setIsModalOpen(true);
+    };
+
+    const openPasswordModal = (user) => {
+        setPasswordTargetUser(user);
+        setIsPasswordModalOpen(true);
     };
 
     return (
@@ -107,8 +117,9 @@ export default function Users() {
                                                 </span>
                                             </td>
                                             <td className="text-right">
-                                                <button className="btn btn-icon btn-ghost" onClick={() => openModal(user)}><HiPencil /></button>
-                                                <button className="btn btn-icon btn-danger" onClick={() => handleDelete(user.id)}><HiTrash /></button>
+                                                <button className="btn btn-icon btn-ghost" title="Change Password" onClick={() => openPasswordModal(user)}><HiKey /></button>
+                                                <button className="btn btn-icon btn-ghost" title="Edit User" onClick={() => openModal(user)}><HiPencil /></button>
+                                                <button className="btn btn-icon btn-danger" title="Delete User" onClick={() => handleDelete(user.id)}><HiTrash /></button>
                                             </td>
                                         </tr>
                                     ))
@@ -146,18 +157,31 @@ export default function Users() {
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    {!editingUser && (
-                        <div className="form-group">
-                            <label className="form-label">Password</label>
-                            <input type="password" name="password" className="form-input" required />
-                        </div>
-                    )}
+                    <div className="form-group">
+                        <label className="form-label">{editingUser ? 'New Password (leave blank to keep current)' : 'Password *'}</label>
+                        <input
+                            type="password"
+                            name="password"
+                            className="form-input"
+                            placeholder={editingUser ? 'Leave blank to keep current' : 'At least 6 characters'}
+                            minLength={6}
+                            required={!editingUser}
+                        />
+                    </div>
                     <div className="flex gap-md" style={{ marginTop: 'var(--spacing-xl)' }}>
                         <button type="button" className="btn btn-secondary flex-1" onClick={() => setIsModalOpen(false)}>Cancel</button>
                         <button type="submit" className="btn btn-primary flex-1">Save User</button>
                     </div>
                 </form>
             </Modal>
+
+            {/* Admin Direct Password Change Modal */}
+            <ChangePasswordModal
+                isOpen={isPasswordModalOpen}
+                onClose={() => { setIsPasswordModalOpen(false); setPasswordTargetUser(null); }}
+                targetUser={passwordTargetUser}
+                onSuccess={fetchUsers}
+            />
         </div>
     );
 }

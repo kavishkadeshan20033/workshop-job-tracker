@@ -45,11 +45,17 @@ const JobModel = {
                    c.phone as customer_phone,
                    c.email as customer_email,
                    t.name as technician_name,
+                   t.phone as technician_phone,
+                   t.user_id as technician_user_id,
+                   u_tech.email as technician_email,
+                   u_creator.full_name as creator_name,
                    d.brand as device_brand,
                    d.model as device_model
             FROM jobs j
             LEFT JOIN customers c ON j.customer_id = c.id
             LEFT JOIN technicians t ON j.technician_id = t.id
+            LEFT JOIN users u_tech ON t.user_id = u_tech.id
+            LEFT JOIN users u_creator ON j.created_by = u_creator.id
             LEFT JOIN devices d ON j.device_id = d.id
             WHERE j.id = ?
         `, [id]);

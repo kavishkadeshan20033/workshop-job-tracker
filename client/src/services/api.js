@@ -34,6 +34,7 @@ export const authAPI = {
     login: (data) => api.post('/auth/login', data),
     register: (data) => api.post('/auth/register', data),
     getProfile: () => api.get('/auth/profile'),
+    changePassword: (data) => api.post('/auth/change-password', data),
     forgotPassword: (data) => api.post('/auth/forgot-password', data),
     resetPassword: (data) => api.post('/auth/reset-password', data),
 };
@@ -43,6 +44,7 @@ export const userAPI = {
     getById: (id) => api.get(`/users/${id}`),
     create: (data) => api.post('/users', data),
     update: (id, data) => api.put(`/users/${id}`, data),
+    changePassword: (id, data) => api.put(`/users/${id}/password`, data),
     delete: (id) => api.delete(`/users/${id}`),
 };
 

@@ -5,12 +5,15 @@ import {
     HiOutlineViewGrid, HiOutlineBriefcase, HiOutlineUsers,
     HiOutlineCube, HiOutlineDocumentText, HiOutlineChartBar,
     HiOutlineLogout, HiOutlineUserGroup, HiOutlineIdentification,
-    HiOutlineDesktopComputer, HiOutlineMenu, HiOutlineX
+    HiOutlineDesktopComputer, HiOutlineMenu, HiOutlineX,
+    HiOutlineKey
 } from 'react-icons/hi';
+import ChangePasswordModal from './ChangePasswordModal';
 
 export default function Sidebar() {
     const { user, logout, isAdmin } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
     const navItems = [
         { path: '/', icon: <HiOutlineViewGrid />, label: 'Dashboard' },
@@ -84,6 +87,10 @@ export default function Sidebar() {
                 )}
 
                 <div className="sidebar-section-title">Account</div>
+                <button className="sidebar-link" onClick={() => { setIsPasswordModalOpen(true); closeMobile(); }}>
+                    <span className="sidebar-link-icon"><HiOutlineKey /></span>
+                    Change Password
+                </button>
                 <button className="sidebar-link" onClick={() => { logout(); closeMobile(); }}>
                     <span className="sidebar-link-icon"><HiOutlineLogout /></span>
                     Sign Out
@@ -91,12 +98,20 @@ export default function Sidebar() {
             </nav>
 
             {/* User Profile */}
-            <div className="sidebar-user">
+            <div 
+                className="sidebar-user" 
+                onClick={() => setIsPasswordModalOpen(true)}
+                style={{ cursor: 'pointer', transition: 'background-color var(--transition-fast)' }}
+                title="Click to change your password"
+            >
                 <div className="sidebar-user-avatar">{initials}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                     <div className="sidebar-user-name">{user?.username || 'User'}</div>
                     <div className="sidebar-user-role">{user?.role || 'technician'}</div>
                 </div>
+                <span style={{ color: 'var(--text-light)', fontSize: '1rem', display: 'flex', alignItems: 'center' }}>
+                    <HiOutlineKey />
+                </span>
             </div>
         </>
     );
@@ -128,6 +143,12 @@ export default function Sidebar() {
             <aside className={`sidebar sidebar-mobile-drawer ${mobileOpen ? 'open' : ''}`}>
                 <SidebarContent />
             </aside>
+
+            {/* Change Password Modal */}
+            <ChangePasswordModal
+                isOpen={isPasswordModalOpen}
+                onClose={() => setIsPasswordModalOpen(false)}
+            />
         </>
     );
 }

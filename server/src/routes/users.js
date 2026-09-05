@@ -23,7 +23,12 @@ router.post('/', [
 router.put('/:id', [
     body('email').optional().isEmail(),
     body('role').optional().isIn(['admin', 'employee']),
+    body('password').optional().isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ], validate, userController.update);
+
+router.put('/:id/password', [
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+], validate, userController.changePassword);
 
 router.delete('/:id', userController.delete);
 

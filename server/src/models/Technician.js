@@ -11,7 +11,12 @@ const TechnicianModel = {
     },
 
     async findById(id) {
-        return queryOne('SELECT * FROM technicians WHERE id = ?', [id]);
+        return queryOne(`
+            SELECT t.*, u.email, u.full_name as user_name 
+            FROM technicians t
+            LEFT JOIN users u ON t.user_id = u.id
+            WHERE t.id = ?
+        `, [id]);
     },
     
     async findByUserId(user_id) {

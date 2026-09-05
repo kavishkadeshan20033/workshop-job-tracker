@@ -214,6 +214,44 @@ const authController = {
             next(error);
         }
     },
+
+    async changePassword(req, res, next) {
+        try {
+            const { currentPassword, newPassword } = req.body;
+            if (!currentPassword || !newPassword) {
+                return res.status(400).json({ error: 'Current password and new password are required' });
+            }
+
+            if (newPassword.length < 6) {
+                return res.status(400).json({ error: 'New password must be at least 6 characters long' });
+            }
+
+            const user = await UserModel.findByIdWithPassword(req.user.id);
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const isMatch = await comparePassword(currentPassword, user.password_hash);
+            if (!isMatch) {
+                return res.status(400).json({ error: 'Current password is incorrect' });
+            }
+
+            await UserModel.update(user.id, { password: newPassword });
+
+            await AuditModel.log({
+                user_id: user.id,
+                action: 'CHANGE_PASSWORD',
+                entity: 'users',
+                entity_id: user.id,
+                ip_address: req.ip,
+            });
+
+            logger.info(`User changed their password: ${user.username}`);
+            res.json({ message: 'Password changed successfully' });
+        } catch (error) {
+            next(error);
+        }
+    },
 };
 
 module.exports = authController;

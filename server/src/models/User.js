@@ -10,6 +10,10 @@ const UserModel = {
         return queryOne('SELECT id, username, email, full_name, phone, role, is_active, created_at, updated_at FROM users WHERE id = ?', [id]);
     },
 
+    async findByIdWithPassword(id) {
+        return queryOne('SELECT * FROM users WHERE id = ?', [id]);
+    },
+
     async findByUsername(username) {
         return queryOne('SELECT * FROM users WHERE username = ?', [username]);
     },

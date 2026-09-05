@@ -5,7 +5,7 @@ git status
 git add .
 
 # 3. Commit the changes
-git commit -m "Remove email feature and add password show/hide toggle button"
+git commit -m "Add email notification when new job is assigned to technician and customer"
 
 # 4. Push to your main GitHub branch
 git push origin main

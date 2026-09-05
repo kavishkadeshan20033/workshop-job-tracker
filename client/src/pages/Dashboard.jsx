@@ -16,6 +16,16 @@ const statusConfig = {
     in_progress:{ badge: 'badge-primary', label: 'In Progress' },
 };
 
+const formatDateSafe = (dateVal) => {
+    if (!dateVal) return '—';
+    try {
+        const d = new Date(typeof dateVal === 'string' ? dateVal.replace(' ', 'T') : dateVal);
+        return isNaN(d.getTime()) ? '—' : format(d, 'MMM dd, yyyy');
+    } catch {
+        return '—';
+    }
+};
+
 export default function Dashboard() {
     const [stats, setStats] = useState(null);
     const [recentJobs, setRecentJobs] = useState([]);
@@ -26,14 +36,25 @@ export default function Dashboard() {
 
     const loadData = async () => {
         try {
-            const [statsRes, jobsRes, stockRes] = await Promise.all([
+            const [statsRes, jobsRes, stockRes] = await Promise.allSettled([
                 jobAPI.getStats(),
                 jobAPI.getAll({ status: '' }),
                 partAPI.getLowStock(),
             ]);
-            setStats(statsRes.data);
-            setRecentJobs(jobsRes.data.slice(0, 6));
-            setLowStock(stockRes.data);
+
+            if (statsRes.status === 'fulfilled') {
+                setStats(statsRes.value?.data || null);
+            }
+            if (jobsRes.status === 'fulfilled' && Array.isArray(jobsRes.value?.data)) {
+                setRecentJobs(jobsRes.value.data.slice(0, 6));
+            } else {
+                setRecentJobs([]);
+            }
+            if (stockRes.status === 'fulfilled' && Array.isArray(stockRes.value?.data)) {
+                setLowStock(stockRes.value.data);
+            } else {
+                setLowStock([]);
+            }
         } catch (err) {
             console.error('Dashboard load error:', err);
         } finally {
@@ -188,7 +209,7 @@ export default function Dashboard() {
                                                         <span className={`badge ${sc.badge}`}>{sc.label}</span>
                                                     </td>
                                                     <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                                                        {format(new Date(job.date_in), 'MMM dd, yyyy')}
+                                                        {formatDateSafe(job.date_in || job.created_at)}
                                                     </td>
                                                 </tr>
                                             );

@@ -26,6 +26,16 @@ const STATUS_LABELS = {
     delivered: 'Delivered',
 };
 
+const formatDateSafe = (dateVal, formatStr = 'MMM dd, yyyy') => {
+    if (!dateVal) return '—';
+    try {
+        const d = new Date(typeof dateVal === 'string' ? dateVal.replace(' ', 'T') : dateVal);
+        return isNaN(d.getTime()) ? '—' : format(d, formatStr);
+    } catch {
+        return '—';
+    }
+};
+
 export default function Jobs() {
     const { isAdmin, user } = useAuth();
     const [jobs, setJobs] = useState([]);
@@ -261,7 +271,7 @@ export default function Jobs() {
                                                     {STATUS_LABELS[job.status]}
                                                 </span>
                                             </td>
-                                            <td>{format(new Date(job.date_in), 'MMM dd, yyyy')}</td>
+                                            <td>{formatDateSafe(job.date_in || job.created_at)}</td>
                                             <td className="text-right">
                                                 <button className="btn btn-sm btn-secondary" onClick={() => openViewModal(job.id)}>
                                                     View Details
@@ -361,7 +371,7 @@ export default function Jobs() {
                                             <div key={note.id} style={{ background: 'var(--bg-secondary)', padding: '10px', borderRadius: '8px' }}>
                                                 <div className="flex justify-between items-center mb-xs">
                                                     <span className="font-semibold text-sm text-primary">{note.author_name}</span>
-                                                    <span className="text-xs text-muted">{format(new Date(note.created_at), 'MMM dd, HH:mm')}</span>
+                                                    <span className="text-xs text-muted">{formatDateSafe(note.created_at, 'MMM dd, HH:mm')}</span>
                                                 </div>
                                                 <p className="text-sm m-0">{note.description}</p>
                                             </div>

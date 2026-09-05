@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     HiOutlineUser,
@@ -38,9 +38,20 @@ export default function Login() {
     // Shared feedback & loading states
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [registrationMsg, setRegistrationMsg] = useState('');
 
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.registeredUsername) {
+            setForm((prev) => ({ ...prev, username: location.state.registeredUsername }));
+        }
+        if (location.state?.registrationSuccessMessage) {
+            setRegistrationMsg(location.state.registrationSuccessMessage);
+        }
+    }, [location.state]);
 
     // Countdown timer for resending verification code
     useEffect(() => {
@@ -59,6 +70,7 @@ export default function Login() {
     const handleLoginSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setRegistrationMsg('');
         if (!form.username || !form.password) {
             setError('Please fill in all fields');
             return;
@@ -215,6 +227,46 @@ export default function Login() {
                         </div>
 
                         {error && <div className="login-error">{error}</div>}
+
+                        {registrationMsg && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '10px',
+                                padding: '12px 14px',
+                                background: '#ecfdf5',
+                                border: '1px solid #6ee7b7',
+                                borderRadius: '6px',
+                                color: '#065f46',
+                                fontSize: '0.85rem',
+                                fontWeight: 500,
+                                marginBottom: '16px',
+                                lineHeight: 1.4
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <HiOutlineCheckCircle size={20} style={{ color: '#059669', flexShrink: 0 }} />
+                                    <span>{registrationMsg}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setRegistrationMsg('')}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        color: '#065f46',
+                                        fontWeight: 700,
+                                        fontSize: '1.2rem',
+                                        lineHeight: 1,
+                                        padding: '0 4px'
+                                    }}
+                                    title="Dismiss"
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        )}
 
                         <form onSubmit={handleLoginSubmit} className="form">
                             <div className="form-group">

@@ -32,8 +32,14 @@ export default function Register() {
         setLoading(true);
         try {
             await register(form);
-            toast.success('Account created successfully!');
-            navigate('/');
+            toast.success('Account created successfully! Please sign in.');
+            navigate('/login', {
+                state: {
+                    registeredUsername: form.username,
+                    registrationSuccessMessage: 'Account created successfully! Please sign in with your credentials.'
+                },
+                replace: true
+            });
         } catch (err) {
             setError(err.response?.data?.error || 'Registration failed');
         } finally {
